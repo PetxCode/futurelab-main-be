@@ -46,15 +46,16 @@ router.get('/me', auth, async (req, res) => {
 });
 
 // @route   PUT /api/user/profile
-// @desc    Update user profile (name, grade)
+// @desc    Update user profile (name, grade, schoolName)
 router.put('/profile', auth, async (req, res) => {
-  const { fullName, grade } = req.body;
+  const { fullName, grade, schoolName } = req.body;
   try {
     let user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     user.fullName = fullName || user.fullName;
     user.grade = grade || user.grade;
+    user.schoolName = schoolName !== undefined ? schoolName : user.schoolName;
 
     await user.save();
     res.json(user);
@@ -79,6 +80,33 @@ router.post('/avatar', [auth, upload.single('avatar')], async (req, res) => {
     await user.save();
 
     res.json({ avatarUrl: user.avatarUrl });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+const admin = require('../middleware/admin');
+
+// @route   GET /api/user/list
+// @desc    Get all users with filtering (Admin Only)
+router.get('/list', [auth, admin], async (req, res) => {
+  try {
+    const { name, school, grade } = req.query;
+    let query = {};
+
+    if (name) {
+      query.fullName = { $regex: name, $options: 'i' };
+    }
+    if (school) {
+      query.schoolName = { $regex: school, $options: 'i' };
+    }
+    if (grade) {
+      query.grade = { $regex: grade, $options: 'i' };
+    }
+
+    const users = await User.find(query).select('-password').sort({ createdAt: -1 });
+    res.json(users);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');

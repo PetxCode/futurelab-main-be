@@ -22,6 +22,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  schoolName: {
+    type: String,
+    default: '',
+  },
   isAdmin: {
     type: Boolean,
     default: false,
