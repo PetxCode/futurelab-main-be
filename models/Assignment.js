@@ -39,7 +39,11 @@ const assignmentSchema = new mongoose.Schema({
       correctAnswer: { type: Number, required: true }
     }
   ],
-  score: { type: Number, default: null }
+  score: { type: Number, default: null },
+  targetSchool: { 
+    type: String, 
+    default: 'General' 
+  }
 }, { timestamps: true });
 
 // Ensure virtual fields are serialized

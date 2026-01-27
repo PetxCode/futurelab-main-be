@@ -3,15 +3,61 @@ const router = express.Router();
 const Assignment = require('../models/Assignment');
 const Activity = require('../models/Activity');
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 const auth = require('../middleware/auth');
 
 // @route   GET /api/assignments
-// @desc    Get all user assignments
+// @desc    Get all shared assignments + user specific status
 router.get('/', auth, async (req, res) => {
   try {
-    const assignments = await Assignment.find({ user: req.user.id }).sort({ createdAt: -1 });
-    res.json(assignments);
+    // 0. Fetch the full user object to get schoolName
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // 1. Fetch filtered assignments
+    // Logic: General/Global OR My School (Case Insensitive) OR I am the creator
+    const query = {
+      $or: [
+        { targetSchool: { $regex: /^(General|Global)$/i } },
+        { targetSchool: { $regex: new RegExp(`^${user.schoolName}$`, 'i') } },
+        { user: req.user.id }
+      ]
+    };
+
+    // If Super Admin, show everything
+    if (user.isAdmin) {
+      delete query.$or;
+    }
+    
+    console.log(`[Assignments] Fetching for user: ${user.fullName}, School: "${user.schoolName}"`);
+    console.log(`[Assignments] Query:`, JSON.stringify(query));
+    
+    const assignments = await Assignment.find(query).sort({ createdAt: -1 });
+    console.log(`[Assignments] Found ${assignments.length} assignments.`);
+    
+    // 2. Fetch the current user's assignment completions
+    const activities = await Activity.find({ 
+      user: req.user.id, 
+      type: 'assignment' 
+    });
+
+    // 3. Merge data
+    const enrichedAssignments = assignments.map(task => {
+      const completion = activities.find(act => act.title === task.title);
+      const taskObj = task.toJSON();
+      
+      if (completion) {
+        return {
+          ...taskObj,
+          status: 'Completed',
+          score: completion.score
+        };
+      }
+      return taskObj;
+    });
+
+    res.json(enrichedAssignments);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -19,11 +65,13 @@ router.get('/', auth, async (req, res) => {
 });
 
 // @route   POST /api/assignments
-// @desc    Create a new assignment
+// @desc    Create a new assignment template
 router.post('/', auth, async (req, res) => {
-  const { title, subject, dueDate, priority, points, questions } = req.body;
+  const { title, subject, dueDate, priority, points, questions, targetSchool } = req.body;
 
   try {
+    const user = await User.findById(req.user.id);
+    
     const newAssignment = new Assignment({
       title,
       subject,
@@ -32,7 +80,8 @@ router.post('/', auth, async (req, res) => {
       points,
       user: req.user.id,
       status: 'Not Started',
-      questions: questions || []
+      questions: questions || [],
+      targetSchool: targetSchool || (user.isSchoolAdmin ? user.schoolName : 'General')
     });
 
     const assignment = await newAssignment.save();
@@ -44,25 +93,15 @@ router.post('/', auth, async (req, res) => {
 });
 
 // @route   PUT /api/assignments/:id
-// @desc    Update assignment status
+// @desc    Update assignment (Template vs Progress)
 router.put('/:id', auth, async (req, res) => {
   try {
     let assignment = await Assignment.findById(req.params.id);
     if (!assignment) return res.status(404).json({ message: 'Assignment not found' });
 
-    // Check ownership
-    if (assignment.user.toString() !== req.user.id) {
-      return res.status(401).json({ message: 'Not authorized' });
-    }
-
-    assignment = await Assignment.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true }
-    );
-
-    // If status changed to Completed, log activity
-    if (req.body.status === 'Completed' || (req.body.score !== undefined && req.body.score !== null)) {
+    // SCENARIO A: User is submitting personal progress (Take Quiz)
+    if (req.body.score !== undefined || (req.body.status === 'Completed' && !req.body.questions)) {
+      // Log personal activity
       const activity = new Activity({
         user: req.user.id,
         type: 'assignment',
@@ -72,7 +111,26 @@ router.put('/:id', auth, async (req, res) => {
         score: req.body.score || 0
       });
       await activity.save();
+      
+      // Return the hypothetical updated task for the frontend state
+      return res.json({
+        ...assignment.toJSON(),
+        status: 'Completed',
+        score: req.body.score
+      });
     }
+
+    // SCENARIO B: User is trying to edit the master template
+    // Check ownership
+    if (assignment.user.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Only the creator can edit this template' });
+    }
+
+    assignment = await Assignment.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
 
     res.json(assignment);
   } catch (err) {
