@@ -68,7 +68,8 @@ router.put('/:id', auth, async (req, res) => {
         type: 'assignment',
         title: assignment.title,
         category: assignment.subject,
-        points: assignment.points || 50
+        points: assignment.points || 50,
+        score: req.body.score || 0
       });
       await activity.save();
     }

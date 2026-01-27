@@ -4,13 +4,19 @@ const auth = require('../middleware/auth');
 const Activity = require('../models/Activity');
 const Course = require('../models/Course');
 const Assignment = require('../models/Assignment');
+const mongoose = require('mongoose');
 
 // @route   GET /api/analytics
 // @desc    Get user's personalized analytics with timeframe filtering
 router.get('/', auth, async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { timeframe = 'week' } = req.query;
+    let userId = req.user.id;
+    const { timeframe = 'week', userId: requestedUserId } = req.query;
+
+    // If admin is requesting a specific user's analytics
+    if (requestedUserId && req.user.isAdmin) {
+        userId = requestedUserId;
+    }
     
     let startDate = new Date();
     let groupings = 7;
@@ -143,15 +149,56 @@ router.get('/', auth, async (req, res) => {
       return { skill: course.title, level: percentage, color };
     });
 
+    // 3. Recent Completed Activities (What they actually did)
+    const recentActivities = await Activity.find({ 
+        user: userId,
+        type: { $in: ['quiz', 'lesson', 'game', 'assignment'] }
+    }).sort({ createdAt: -1 }).limit(10);
+
+    const transformedActivities = recentActivities.map(act => ({
+        id: act._id,
+        title: act.title,
+        category: act.category || act.type,
+        icon: act.type === 'quiz' ? '📝' : act.type === 'game' ? '🎮' : act.type === 'lesson' ? '📚' : '🎯',
+        reward: act.points,
+        createdAt: act.createdAt
+    }));
+
+    // 4. Lifetime Stats (Global)
+    const lifetimeStats = await Activity.aggregate([
+      { $match: { user: new mongoose.Types.ObjectId(userId) } },
+      { $group: {
+          _id: null,
+          totalPoints: { $sum: "$points" },
+          totalDuration: { $sum: "$duration" },
+          count: { $sum: 1 }
+      }}
+    ]);
+
+    const globalStats = lifetimeStats[0] || { totalPoints: 0, totalDuration: 0, count: 0 };
+    
+    // Calculate total completed courses
+    // A course is completed if all its subCourses are completed? Or just progress?
+    // Using simple count filter for now or existing 'progress' logic if available.
+    // Course model has 'progress' number. Let's assume progress=100 is complete.
+    const completedCoursesCount = await Course.countDocuments({ user: userId, progress: 100 });
+
     res.json({
       studyData,
       skillMatrix,
+      recentActivities: transformedActivities,
       recentQuests,
       summary: {
           gpa: quizCount > 0 ? (totalScore / quizCount / 25).toFixed(2) : "0.00",
           labHours: Math.round(totalHours),
-          techChamp: Math.min(100, Math.round((totalPoints / 500) * 100)), // Based on 500 XP goal per timeframe
+          techChamp: Math.min(100, Math.round((totalPoints / 500) * 100)),
           efficiency: quizCount > 0 ? Math.round(totalScore / quizCount) : 0
+      },
+      lifetime: {
+          totalPoints: globalStats.totalPoints,
+          totalHours: Math.round((globalStats.totalDuration || 0) / 60),
+          totalActivities: globalStats.count,
+          completedCourses: completedCoursesCount
       }
     });
   } catch (err) {
@@ -160,19 +207,59 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// @route   POST /api/analytics/focus
-// @desc    Log a completed focus session
-router.post('/focus', auth, async (req, res) => {
+// @route   POST /api/analytics/log
+// @desc    Log any learning activity (lesson, quiz, game, etc.)
+router.post('/log', auth, async (req, res) => {
     try {
-        const { duration } = req.body;
+        const { type, title, category, points, duration, score } = req.body;
         const activity = new Activity({
             user: req.user.id,
-            type: 'focus',
-            title: 'Focus Session',
-            duration: duration || 25,
-            points: 5 // Small bonus for focusing
+            type,
+            title,
+            category,
+            points: points || 10,
+            duration: duration || 0,
+            score: score || 0
         });
         await activity.save();
+
+        // Sync with Course progress if it's a curriculum-style mission or game level
+        if (type === 'quiz' || type === 'lesson' || type === 'game') {
+            const courseTitle = category === 'Python' ? 'Python Fundamentals' : category;
+            let course = await Course.findOne({ user: req.user.id, title: courseTitle });
+            
+            if (!course) {
+                // Initialize course with dummy modules if it doesn't exist to track progress
+                course = new Course({
+                    user: req.user.id,
+                    title: courseTitle,
+                    category: category,
+                    description: `Learning path for ${courseTitle}`,
+                    subCourses: [] // Will populate as they complete
+                });
+            }
+
+            // check if subCourse already exists
+            const existingSubIndex = course.subCourses.findIndex(sc => sc.title === title);
+            if (existingSubIndex === -1) {
+                course.subCourses.push({
+                    id: `m_${Date.now()}`,
+                    title: title,
+                    isCompleted: true,
+                    duration: duration || '15m'
+                });
+            } else {
+                course.subCourses[existingSubIndex].isCompleted = true;
+            }
+
+            // update progress percentage
+            const totalModules = course.subCourses.length;
+            const completedModules = course.subCourses.filter(m => m.isCompleted).length;
+            course.progress = Math.round((completedModules / totalModules) * 100);
+
+            await course.save();
+        }
+
         res.json(activity);
     } catch (err) {
         console.error(err.message);

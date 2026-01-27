@@ -96,15 +96,17 @@ router.patch('/:id/modules/:moduleId/complete', auth, async (req, res) => {
     if (!module) return res.status(404).json({ message: 'Module not found' });
 
     if (!module.isCompleted) {
+      const { score = 0 } = req.body;
       module.isCompleted = true;
       
       // Log activity
       const activity = new Activity({
         user: req.user.id,
-        type: 'lesson',
+        type: score > 0 ? 'quiz' : 'lesson',
         title: module.title,
         category: course.category || 'Engineering',
-        points: 20
+        points: 20,
+        score: score
       });
       await activity.save();
       await course.save();

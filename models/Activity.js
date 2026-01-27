@@ -8,8 +8,12 @@ const activitySchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['lesson', 'assignment'],
+    enum: ['lesson', 'assignment', 'quiz', 'game', 'focus'],
     required: true
+  },
+  score: {
+    type: Number,
+    default: 0
   },
   title: {
     type: String,
