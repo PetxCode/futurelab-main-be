@@ -71,6 +71,9 @@ router.post('/', auth, async (req, res) => {
 
   try {
     const user = await User.findById(req.user.id);
+    if (!user || (!user.isAdmin && !user.isSchoolAdmin && !user.isInstructor)) {
+      return res.status(403).json({ message: 'Only instructors and admins can create assignments' });
+    }
     
     const newAssignment = new Assignment({
       title,

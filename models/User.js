@@ -30,10 +30,9 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  isSchoolAdmin: {
-    type: Boolean,
-    default: false,
-  },
+  isSchoolAdmin: { type: Boolean, default: false },
+  isInstructor: { type: Boolean, default: false },
+  resetPasswordToken: String,
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

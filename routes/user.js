@@ -204,7 +204,7 @@ router.put('/role/:id', [auth, admin], async (req, res) => {
       return res.status(403).json({ message: 'Only Super Admins can manage roles' });
     }
 
-    const { isAdmin, isSchoolAdmin } = req.body;
+    const { isAdmin, isSchoolAdmin, isInstructor } = req.body;
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -213,6 +213,7 @@ router.put('/role/:id', [auth, admin], async (req, res) => {
 
     if (isAdmin !== undefined) user.isAdmin = isAdmin;
     if (isSchoolAdmin !== undefined) user.isSchoolAdmin = isSchoolAdmin;
+    if (isInstructor !== undefined) user.isInstructor = isInstructor;
 
     await user.save();
     res.json(user);

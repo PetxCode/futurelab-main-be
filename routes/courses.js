@@ -6,13 +6,13 @@ const jwt = require('jsonwebtoken');
 
 const auth = require('../middleware/auth');
 
-// Check if user is admin
-const admin = async (req, res, next) => {
+// Check if user is manager (Admin, School Admin, or Instructor)
+const manager = async (req, res, next) => {
   try {
     const User = require('../models/User');
     const user = await User.findById(req.user.id);
-    if (!user || !user.isAdmin) {
-      return res.status(403).json({ message: 'Access denied. Admins only.' });
+    if (!user || (!user.isAdmin && !user.isSchoolAdmin && !user.isInstructor)) {
+      return res.status(403).json({ message: 'Access denied. Authorized managers only.' });
     }
     next();
   } catch (err) {
@@ -34,7 +34,7 @@ router.get('/', auth, async (req, res) => {
 
 // @route   POST /api/courses
 // @desc    Create a course
-router.post('/', [auth, admin], async (req, res) => {
+router.post('/', [auth, manager], async (req, res) => {
   try {
     const newCourse = new Course({
       ...req.body,
@@ -50,7 +50,7 @@ router.post('/', [auth, admin], async (req, res) => {
 
 // @route   DELETE /api/courses/:id
 // @desc    Delete a course
-router.delete('/:id', [auth, admin], async (req, res) => {
+router.delete('/:id', [auth, manager], async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course) return res.status(404).json({ message: 'Course not found' });
@@ -65,7 +65,7 @@ router.delete('/:id', [auth, admin], async (req, res) => {
 
 // @route   PATCH /api/courses/:id/modules
 // @desc    Add a module to a course
-router.patch('/:id/modules', [auth, admin], async (req, res) => {
+router.patch('/:id/modules', [auth, manager], async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course) return res.status(404).json({ message: 'Course not found' });
