@@ -9,6 +9,8 @@ const assignmentRoutes = require('./routes/assignments');
 const courseRoutes = require('./routes/courses');
 const analyticsRoutes = require('./routes/analytics');
 const schoolRoutes = require('./routes/schools');
+const nextTeachRoutes = require('./routes/nextTeach');
+const projectRoutes = require('./routes/projects');
 
 const app = express();
 
@@ -23,6 +25,8 @@ app.use('/api/assignments', assignmentRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/schools', schoolRoutes);
+app.use('/api/next-teach', nextTeachRoutes);
+app.use('/api/projects', projectRoutes);
 
 // Database Connection
 const PORT = process.env.PORT || 5000;
