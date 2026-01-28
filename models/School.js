@@ -14,6 +14,10 @@ const SchoolSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  isSuspended: {
+    type: Boolean,
+    default: false
   }
 });
 

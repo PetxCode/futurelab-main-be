@@ -42,6 +42,7 @@ router.get('/stats', auth, async (req, res) => {
           name: 1,
           address: 1,
           createdAt: 1,
+          isSuspended: 1,
           studentCount: {
             $size: {
               $filter: {
@@ -151,6 +152,36 @@ router.delete('/:id', auth, async (req, res) => {
     await School.findByIdAndDelete(req.id || req.params.id);
 
     res.json({ message: 'School deleted and associated users blocked successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   PUT api/schools/:id/toggle-suspension
+// @desc    Toggle suspension for a school
+// @access  Private/Admin
+router.put('/:id/toggle-suspension', auth, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const adminUser = await User.findById(req.user.id);
+    
+    if (!adminUser || !adminUser.isAdmin) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const school = await School.findById(req.params.id);
+    if (!school) {
+      return res.status(404).json({ message: 'School not found' });
+    }
+
+    school.isSuspended = !school.isSuspended;
+    await school.save();
+
+    res.json({ 
+      message: `School ${school.isSuspended ? 'suspended' : 'unsuspended'} successfully`,
+      isSuspended: school.isSuspended
+    });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');

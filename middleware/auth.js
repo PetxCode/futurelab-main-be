@@ -15,6 +15,15 @@ module.exports = async function(req, res, next) {
       return res.status(401).json({ message: 'Access denied. Account is inactive or blocked.' });
     }
 
+    // Check if school is suspended
+    if (user.schoolName) {
+      const School = require('../models/School');
+      const school = await School.findOne({ name: user.schoolName });
+      if (school && school.isSuspended) {
+        return res.status(401).json({ message: 'Access denied. Your institution has been suspended.' });
+      }
+    }
+
     next();
   } catch (err) {
     res.status(400).json({ message: 'Token is not valid' });
