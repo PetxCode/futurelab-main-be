@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema({
   },
   isSchoolAdmin: { type: Boolean, default: false },
   isInstructor: { type: Boolean, default: false },
+  isBlocked: { type: Boolean, default: false },
   resetPasswordToken: String,
 }, { timestamps: true });
 

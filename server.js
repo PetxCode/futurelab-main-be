@@ -8,6 +8,7 @@ const userRoutes = require('./routes/user');
 const assignmentRoutes = require('./routes/assignments');
 const courseRoutes = require('./routes/courses');
 const analyticsRoutes = require('./routes/analytics');
+const schoolRoutes = require('./routes/schools');
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/schools', schoolRoutes);
 
 // Database Connection
 const PORT = process.env.PORT || 5000;
