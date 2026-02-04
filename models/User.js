@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema({
   isInstructor: { type: Boolean, default: false },
   isBlocked: { type: Boolean, default: false },
   resetPasswordToken: String,
+  resetPasswordExpires: Date,
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

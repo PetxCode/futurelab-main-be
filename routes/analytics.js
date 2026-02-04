@@ -223,43 +223,6 @@ router.post('/log', auth, async (req, res) => {
         });
         await activity.save();
 
-        // Sync with Course progress if it's a curriculum-style mission or game level
-        if (type === 'quiz' || type === 'lesson' || type === 'game') {
-            const courseTitle = category === 'Python' ? 'Python Fundamentals' : category;
-            let course = await Course.findOne({ user: req.user.id, title: courseTitle });
-            
-            if (!course) {
-                // Initialize course with dummy modules if it doesn't exist to track progress
-                course = new Course({
-                    user: req.user.id,
-                    title: courseTitle,
-                    category: category,
-                    description: `Learning path for ${courseTitle}`,
-                    subCourses: [] // Will populate as they complete
-                });
-            }
-
-            // check if subCourse already exists
-            const existingSubIndex = course.subCourses.findIndex(sc => sc.title === title);
-            if (existingSubIndex === -1) {
-                course.subCourses.push({
-                    id: `m_${Date.now()}`,
-                    title: title,
-                    isCompleted: true,
-                    duration: duration || '15m'
-                });
-            } else {
-                course.subCourses[existingSubIndex].isCompleted = true;
-            }
-
-            // update progress percentage
-            const totalModules = course.subCourses.length;
-            const completedModules = course.subCourses.filter(m => m.isCompleted).length;
-            course.progress = Math.round((completedModules / totalModules) * 100);
-
-            await course.save();
-        }
-
         res.json(activity);
     } catch (err) {
         console.error(err.message);

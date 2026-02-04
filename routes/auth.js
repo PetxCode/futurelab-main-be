@@ -3,6 +3,17 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const nodemailer = require('nodemailer');
+
+// Setup Nodemailer (Placeholder settings)
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+  port: process.env.SMTP_PORT || 587,
+  auth: {
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+  },
+});
 
 // Register
 router.post('/register', async (req, res) => {
@@ -69,6 +80,79 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('Login Error:', err);
     res.status(500).json({ message: 'Server error', detail: err.message });
+  }
+});
+
+// Forgot Password - Send PIN
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User with this email does not exist' });
+    }
+
+    // Generate 6-digit PIN
+    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetPasswordToken = pin;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    console.log(`[AUTH] Password Reset PIN for ${email}: ${pin}`);
+
+    // Send Email
+    const mailOptions = {
+      from: `"FutureLab Support" <${process.env.SMTP_USER || 'no-reply@futurelab.ai'}>`,
+      to: user.email,
+      subject: 'Password Reset PIN',
+      text: `Your password reset PIN is: ${pin}. It expires in 1 hour.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+          <h2 style="color: #4f46e5;">Password Reset</h2>
+          <p>You requested a password reset. Use the PIN below to proceed:</p>
+          <div style="font-size: 24px; font-weight: bold; color: #4f46e5; margin: 20px 0;">${pin}</div>
+          <p>This PIN expires in 1 hour.</p>
+          <p style="color: #666; font-size: 12px;">If you did not request this, please ignore this email.</p>
+        </div>
+      `,
+    };
+
+    if (process.env.SMTP_PASS) {
+      await transporter.sendMail(mailOptions);
+    }
+
+    res.json({ message: 'PIN sent to email. Check your inbox (or server console if dev).' });
+  } catch (err) {
+    console.error('Forgot Password Error:', err);
+    res.status(500).json({ message: 'Error processing request', detail: err.message });
+  }
+});
+
+// Reset Password - Simplified (No PIN)
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    
+    // Clear reset tokens just in case
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ message: 'Password reset successful. You can now log in.' });
+  } catch (err) {
+    console.error('Reset Password Error:', err);
+    res.status(500).json({ message: 'Error resetting password', detail: err.message });
   }
 });
 
