@@ -19,8 +19,8 @@ router.get('/', auth, async (req, res) => {
     // Logic: General/Global OR My School (Case Insensitive) OR I am the creator
     const query = {
       $or: [
-        { targetSchool: { $regex: /^(General|Global)$/i } },
-        { targetSchool: { $regex: new RegExp(`^${user.schoolName}$`, 'i') } },
+        { targetSchools: { $in: ['General', 'Global', 'general', 'global'] } },
+        { targetSchools: { $in: [user.schoolName] } },
         { user: req.user.id }
       ]
     };
@@ -67,7 +67,7 @@ router.get('/', auth, async (req, res) => {
 // @route   POST /api/assignments
 // @desc    Create a new assignment template
 router.post('/', auth, async (req, res) => {
-  const { title, subject, dueDate, priority, points, questions, targetSchool } = req.body;
+  const { title, subject, dueDate, priority, points, questions, targetSchools } = req.body;
 
   try {
     const user = await User.findById(req.user.id);
@@ -84,7 +84,7 @@ router.post('/', auth, async (req, res) => {
       user: req.user.id,
       status: 'Not Started',
       questions: questions || [],
-      targetSchool: targetSchool || (user.isSchoolAdmin ? user.schoolName : 'General')
+      targetSchools: targetSchools || (user.isSchoolAdmin ? [user.schoolName] : ['General'])
     });
 
     const assignment = await newAssignment.save();

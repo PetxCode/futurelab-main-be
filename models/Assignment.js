@@ -40,9 +40,9 @@ const assignmentSchema = new mongoose.Schema({
     }
   ],
   score: { type: Number, default: null },
-  targetSchool: { 
-    type: String, 
-    default: 'General' 
+  targetSchools: { 
+    type: [String], 
+    default: ['General'] 
   }
 }, { timestamps: true });
 
