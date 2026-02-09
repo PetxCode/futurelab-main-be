@@ -12,7 +12,14 @@ const schoolRoutes = require('./routes/schools');
 const nextTeachRoutes = require('./routes/nextTeach');
 const projectRoutes = require('./routes/projects');
 
+const http = require('http');
+const { initSocket } = require('./sockets/battleSocket');
+
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket
+initSocket(server);
 
 // Middleware
 app.use(express.json());
@@ -30,14 +37,26 @@ app.use('/api/projects', projectRoutes);
 
 // Database Connection
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/FutureLab';
+// const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/FutureLab';
+const MONGO_URI = "mongodb+srv://nextteachnow:nextteachnow@cluster0.ozfyjn7.mongodb.net/FutureLabDB?appName=Cluster0";
 
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log(`MongoDB Connected: ${MONGO_URI}`);
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  })
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
-  });
+// MongoDB connection with retry logic
+const connectDB = async () => {
+  try {
+    await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    });
+    console.log(`✅ MongoDB Connected: ${MONGO_URI}`);
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err.message);
+    console.log('⚠️  Server will continue without MongoDB (Code Battle will still work)');
+    console.log('💡 To fix: Check your internet connection or MongoDB Atlas IP whitelist');
+  }
+};
+
+// Start server immediately, connect to MongoDB in background
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🎮 Code Battle available at http://localhost:${PORT}`);
+  connectDB(); // Connect to MongoDB in background
+});
