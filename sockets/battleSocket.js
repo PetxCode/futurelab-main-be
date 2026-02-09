@@ -91,6 +91,7 @@ const initSocket = (httpServer) => {
             // Broadcast updated scores
             io.to(roomId).emit("scores_updated", rooms[roomId].users);
             
+            // Emit success result to trigger confetti and point animation
             io.to(roomId).emit("submission_result", { 
                 userId: socket.id, 
                 success: true, 
@@ -104,7 +105,12 @@ const initSocket = (httpServer) => {
             });
 
         } else {
-             socket.emit("submission_error", "Incorrect solution. Try again!");
+            // Emit failure result (no confetti, but shows error feedback)
+            io.to(roomId).emit("submission_result", { 
+                userId: socket.id, 
+                success: false, 
+                points: 0 
+            });
         }
     });
 
