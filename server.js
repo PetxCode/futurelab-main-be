@@ -36,9 +36,8 @@ app.use('/api/next-teach', nextTeachRoutes);
 app.use('/api/projects', projectRoutes);
 
 // Database Connection
-const PORT = process.env.PORT || 5001;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/FutureLab';
-// const MONGO_URI = "mongodb+srv://nextteachnow:nextteachnow@cluster0.ozfyjn7.mongodb.net/FutureLabDB?appName=Cluster0";
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://nextteachnow:nextteachnow@cluster0.ozfyjn7.mongodb.net/FutureLabDB?appName=Cluster0";
 
 // MongoDB connection with retry logic
 const connectDB = async () => {
