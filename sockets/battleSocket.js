@@ -30,7 +30,9 @@ const initSocket = (httpServer) => {
           currentRound: 0,
           currentLevel: 1, // Start at Level 1
           totalRounds: 10, // Battle will have 10 questions
-          roundScores: {} // Track scores per round
+          roundScores: {}, // Track scores per round
+          firstCorrectTime: null, // Track time of first correct answer
+          roundStartTime: null // Track when round started
         };
       }
 
@@ -75,12 +77,65 @@ const initSocket = (httpServer) => {
         
         if (!currentQuestion) return;
         
-        // Simple validation - check if solution keyword is in code
-        const passed = code.includes(currentQuestion.solution.split(';')[0].trim());
+        // Validate Python code using pattern matching
+        let passed = false;
+        try {
+            // Normalize code: remove extra whitespace and comments
+            const normalizedCode = code
+                .replace(/#.*/g, '') // Remove comments
+                .replace(/\s+/g, ' ') // Normalize whitespace
+                .trim()
+                .toLowerCase();
+            
+            const normalizedSolution = currentQuestion.solution
+                .replace(/#.*/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+            
+            // Check if the code contains the key elements from the solution
+            // For simple questions, check if main variable assignments are present
+            const solutionLines = normalizedSolution.split(/[;\n]/).filter(l => l.trim());
+            const codeLines = normalizedCode.split(/[;\n]/).filter(l => l.trim());
+            
+            // Check if all key variable assignments from solution are in the code
+            let matchCount = 0;
+            for (const solLine of solutionLines) {
+                const varMatch = solLine.match(/(\w+)\s*=\s*(.+)/);
+                if (varMatch) {
+                    const [, varName, varValue] = varMatch;
+                    // Check if this variable assignment exists in user's code
+                    const userHasVar = codeLines.some(line => 
+                        line.includes(varName) && line.includes('=')
+                    );
+                    if (userHasVar) matchCount++;
+                }
+            }
+            
+            // Pass if at least 80% of solution elements are present
+            passed = matchCount >= Math.ceil(solutionLines.length * 0.8);
+            
+        } catch (error) {
+            console.log('Code validation error:', error.message);
+            passed = false;
+        }
         
         if (passed) {
             const points = Math.max(10, 100 - timeTaken);
             rooms[roomId].scores[socket.id] = (rooms[roomId].scores[socket.id] || 0) + points;
+            
+            // Track first correct answer time
+            const isFirstCorrect = !rooms[roomId].firstCorrectTime;
+            if (isFirstCorrect) {
+                rooms[roomId].firstCorrectTime = timeTaken;
+                
+                const user = rooms[roomId].users.find(u => u.id === socket.id);
+                // Broadcast to all players that first correct answer was submitted
+                io.to(roomId).emit("first_correct", {
+                    username: user?.username,
+                    time: timeTaken
+                });
+            }
             
             // Update user score in users array
             const userIndex = rooms[roomId].users.findIndex(u => u.id === socket.id);
@@ -141,6 +196,11 @@ const initSocket = (httpServer) => {
     if (!rooms[roomId]) return;
     
     const room = rooms[roomId];
+    
+    // Reset first correct time for new round
+    room.firstCorrectTime = null;
+    room.roundStartTime = Date.now();
+    
     const levelQuestions = getQuestionsByLevel(room.currentLevel);
     const question = levelQuestions[room.currentQuestionIndex];
     
