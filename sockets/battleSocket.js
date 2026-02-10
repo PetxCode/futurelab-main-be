@@ -36,7 +36,7 @@ const initSocket = (httpServer) => {
         };
       }
 
-      const user = { id: socket.id, username, score: 0 };
+      const user = { id: socket.id, username, score: 0, lastSolveTime: null, lastRoundPoints: null };
       rooms[roomId].users.push(user);
       rooms[roomId].scores[socket.id] = 0;
 
@@ -141,6 +141,8 @@ const initSocket = (httpServer) => {
             const userIndex = rooms[roomId].users.findIndex(u => u.id === socket.id);
             if (userIndex !== -1) {
                 rooms[roomId].users[userIndex].score = rooms[roomId].scores[socket.id];
+                rooms[roomId].users[userIndex].lastSolveTime = timeTaken;
+                rooms[roomId].users[userIndex].lastRoundPoints = points;
             }
             
             // Broadcast updated scores
@@ -201,6 +203,12 @@ const initSocket = (httpServer) => {
     room.firstCorrectTime = null;
     room.roundStartTime = Date.now();
     
+    // Reset round-specific data for all users
+    room.users.forEach(user => {
+      user.lastSolveTime = null;
+      user.lastRoundPoints = null;
+    });
+
     const levelQuestions = getQuestionsByLevel(room.currentLevel);
     const question = levelQuestions[room.currentQuestionIndex];
     
