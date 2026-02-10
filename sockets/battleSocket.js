@@ -210,7 +210,7 @@ const initSocket = (httpServer) => {
       return;
     }
     
-    const duration = 30; // 30 seconds per question
+    const duration = 90; // 90 seconds per question
     
     io.to(roomId).emit("battle_started", { 
       question, 
