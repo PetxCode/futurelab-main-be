@@ -571,6 +571,345 @@ const questionLevels = {
       difficulty: "easy",
       topic: "Strings"
     }
+  ],
+  // LEVEL 6: STRING METHODS
+  6: [
+    {
+      id: 51,
+      level: 6,
+      title: "Replace Substring",
+      description: "Create a variable `text = 'I like apples'`. Replace 'apples' with 'bananas' and store in `new_text`.",
+      starterCode: "text = 'I like apples'\n",
+      testCase: "new_text == 'I like bananas'",
+      solution: "new_text = text.replace('apples', 'bananas')",
+      difficulty: "easy",
+      topic: "String Methods"
+    },
+    {
+      id: 52,
+      level: 6,
+      title: "Find Position",
+      description: "Create a variable `text = 'Python logic'`. Find the index of 'logic' and store it in `pos`.",
+      starterCode: "text = 'Python logic'\n",
+      testCase: "pos == 7",
+      solution: "pos = text.find('logic')",
+      difficulty: "easy",
+      topic: "String Methods"
+    },
+    {
+      id: 53,
+      level: 6,
+      title: "Strip Whitespace",
+      description: "Create a variable `text = '  clean me  '`. Remove the leading and trailing whitespace and store in `clean`.",
+      starterCode: "text = '  clean me  '\n",
+      testCase: "clean == 'clean me'",
+      solution: "clean = text.strip()",
+      difficulty: "easy",
+      topic: "String Methods"
+    },
+    {
+      id: 54,
+      level: 6,
+      title: "Count Occurrences",
+      description: "Create a variable `text = 'banana'`. Count how many times 'a' appears and store in `count`.",
+      starterCode: "text = 'banana'\n",
+      testCase: "count == 3",
+      solution: "count = text.count('a')",
+      difficulty: "easy",
+      topic: "String Methods"
+    },
+    {
+      id: 55,
+      level: 6,
+      title: "Check Digit",
+      description: "Create a variable `val = '123'`. Check if it contains only digits and store in `is_num`.",
+      starterCode: "val = '123'\n",
+      testCase: "is_num == True",
+      solution: "is_num = val.isdigit()",
+      difficulty: "easy",
+      topic: "String Methods"
+    },
+    {
+      id: 56,
+      level: 6,
+      title: "Check Start",
+      description: "Create a variable `text = 'Hello World'`. Check if it starts with 'Hello' and store in `starts`.",
+      starterCode: "text = 'Hello World'\n",
+      testCase: "starts == True",
+      solution: "starts = text.startswith('Hello')",
+      difficulty: "easy",
+      topic: "String Methods"
+    },
+    {
+      id: 57,
+      level: 6,
+      title: "Check End",
+      description: "Create a variable `filename = 'data.csv'`. Check if it ends with '.csv' and store in `is_csv`.",
+      starterCode: "filename = 'data.csv'\n",
+      testCase: "is_csv == True",
+      solution: "is_csv = filename.endswith('.csv')",
+      difficulty: "easy",
+      topic: "String Methods"
+    },
+    {
+      id: 58,
+      level: 6,
+      title: "Capitalize",
+      description: "Create a variable `text = 'python'`. Capitalize only the first letter and store in `proper`.",
+      starterCode: "text = 'python'\n",
+      testCase: "proper == 'Python'",
+      solution: "proper = text.capitalize()",
+      difficulty: "easy",
+      topic: "String Methods"
+    },
+    {
+      id: 59,
+      level: 6,
+      title: "Title Case",
+      description: "Create a variable `text = 'hello world'`. Change it to title case and store in `titled`.",
+      starterCode: "text = 'hello world'\n",
+      testCase: "titled == 'Hello World'",
+      solution: "titled = text.title()",
+      difficulty: "easy",
+      topic: "String Methods"
+    },
+    {
+      id: 60,
+      level: 6,
+      title: "Join Strings",
+      description: "Create a list `words = ['a', 'b', 'c']`. Join them with '-' and store in `joined`.",
+      starterCode: "words = ['a', 'b', 'c']\n",
+      testCase: "joined == 'a-b-c'",
+      solution: "joined = '-'.join(words)",
+      difficulty: "easy",
+      topic: "String Methods"
+    }
+  ],
+  // LEVEL 7: TYPE CONVERSIONS
+  7: [
+    {
+      id: 61,
+      level: 7,
+      title: "String to Int",
+      description: "Convert the string `s = '100'` to an integer and store in `num`.",
+      starterCode: "s = '100'\n",
+      testCase: "num === 100",
+      solution: "num = int(s)",
+      difficulty: "easy",
+      topic: "Type Conversions"
+    },
+    {
+      id: 62,
+      level: 7,
+      title: "Int to String",
+      description: "Convert the integer `n = 50` to a string and store in `text`.",
+      starterCode: "n = 50\n",
+      testCase: "text == '50'",
+      solution: "text = str(n)",
+      difficulty: "easy",
+      topic: "Type Conversions"
+    },
+    {
+      id: 63,
+      level: 7,
+      title: "Float to Int",
+      description: "Convert `f = 9.99` to an integer (truncate) and store in `whole`.",
+      starterCode: "f = 9.99\n",
+      testCase: "whole == 9",
+      solution: "whole = int(f)",
+      difficulty: "easy",
+      topic: "Type Conversions"
+    },
+    {
+      id: 64,
+      level: 7,
+      title: "Int to Float",
+      description: "Convert `n = 5` to a float and store in `decimal`.",
+      starterCode: "n = 5\n",
+      testCase: "decimal == 5.0",
+      solution: "decimal = float(n)",
+      difficulty: "easy",
+      topic: "Type Conversions"
+    },
+    {
+      id: 65,
+      level: 7,
+      title: "List to Tuple",
+      description: "Convert `l = [1, 2, 3]` to a tuple and store in `t`.",
+      starterCode: "l = [1, 2, 3]\n",
+      testCase: "type(t) == tuple",
+      solution: "t = tuple(l)",
+      difficulty: "easy",
+      topic: "Type Conversions"
+    },
+    {
+      id: 66,
+      level: 7,
+      title: "Tuple to List",
+      description: "Convert `t = (4, 5, 6)` to a list and store in `l`.",
+      starterCode: "t = (4, 5, 6)\n",
+      testCase: "type(l) == list",
+      solution: "l = list(t)",
+      difficulty: "easy",
+      topic: "Type Conversions"
+    },
+    {
+      id: 67,
+      level: 7,
+      title: "List to Set",
+      description: "Convert `l = [1, 2, 2, 3]` to a set to remove duplicates and store in `s`.",
+      starterCode: "l = [1, 2, 2, 3]\n",
+      testCase: "len(s) == 3",
+      solution: "s = set(l)",
+      difficulty: "easy",
+      topic: "Type Conversions"
+    },
+    {
+      id: 68,
+      level: 7,
+      title: "Char to Ordinal",
+      description: "Get the ASCII value of character `c = 'A'` and store in `code`.",
+      starterCode: "c = 'A'\n",
+      testCase: "code == 65",
+      solution: "code = ord(c)",
+      difficulty: "easy",
+      topic: "Type Conversions"
+    },
+    {
+      id: 69,
+      level: 7,
+      title: "Ordinal to Char",
+      description: "Get the character for ASCII value `code = 97` and store in `char`.",
+      starterCode: "code = 97\n",
+      testCase: "char == 'a'",
+      solution: "char = chr(code)",
+      difficulty: "easy",
+      topic: "Type Conversions"
+    },
+    {
+      id: 70,
+      level: 7,
+      title: "Hexadecimal String",
+      description: "Convert `n = 255` to a hexadecimal string and store in `h`.",
+      starterCode: "n = 255\n",
+      testCase: "h == '0xff'",
+      solution: "h = hex(n)",
+      difficulty: "easy",
+      topic: "Type Conversions"
+    }
+  ],
+  // LEVEL 8: LIST METHODS (Advanced)
+  8: [
+    {
+      id: 71,
+      level: 8,
+      title: "Insert at Index",
+      description: "Create `l = [1, 3]`. Insert number 2 at index 1.",
+      starterCode: "l = [1, 3]\n",
+      testCase: "l[1] == 2",
+      solution: "l.insert(1, 2)",
+      difficulty: "easy",
+      topic: "List Methods"
+    },
+    {
+      id: 72,
+      level: 8,
+      title: "Remove by Value",
+      description: "Create `l = ['a', 'b', 'c']`. Remove 'b' from the list.",
+      starterCode: "l = ['a', 'b', 'c']\n",
+      testCase: "'b' not in l",
+      solution: "l.remove('b')",
+      difficulty: "easy",
+      topic: "List Methods"
+    },
+    {
+      id: 73,
+      level: 8,
+      title: "Clear List",
+      description: "Create `l = [1, 2, 3]`. Remove all elements from the list.",
+      starterCode: "l = [1, 2, 3]\n",
+      testCase: "len(l) == 0",
+      solution: "l.clear()",
+      difficulty: "easy",
+      topic: "List Methods"
+    },
+    {
+      id: 74,
+      level: 8,
+      title: "Find Index",
+      description: "Create `l = [10, 20, 30]`. Find the index of 20 and store in `idx`.",
+      starterCode: "l = [10, 20, 30]\n",
+      testCase: "idx == 1",
+      solution: "idx = l.index(20)",
+      difficulty: "easy",
+      topic: "List Methods"
+    },
+    {
+      id: 75,
+      level: 8,
+      title: "Count Values",
+      description: "Create `l = [1, 2, 2, 3, 2]`. Count how many 2s are in the list and store in `cnt`.",
+      starterCode: "l = [1, 2, 2, 3, 2]\n",
+      testCase: "cnt == 3",
+      solution: "cnt = l.count(2)",
+      difficulty: "easy",
+      topic: "List Methods"
+    },
+    {
+      id: 76,
+      level: 8,
+      title: "Sort List",
+      description: "Create `l = [3, 1, 4, 2]`. Sort the list in ascending order.",
+      starterCode: "l = [3, 1, 4, 2]\n",
+      testCase: "l == [1, 2, 3, 4]",
+      solution: "l.sort()",
+      difficulty: "easy",
+      topic: "List Methods"
+    },
+    {
+      id: 77,
+      level: 8,
+      title: "Reverse Sort",
+      description: "Create `l = [1, 2, 3]`. Sort the list in descending order.",
+      starterCode: "l = [1, 2, 3]\n",
+      testCase: "l == [3, 2, 1]",
+      solution: "l.sort(reverse=True)",
+      difficulty: "medium",
+      topic: "List Methods"
+    },
+    {
+      id: 78,
+      level: 8,
+      title: "Extend List",
+      description: "Create `l1 = [1, 2]` and `l2 = [3, 4]`. Extend `l1` with `l2`.",
+      starterCode: "l1 = [1, 2]\nl2 = [3, 4]\n",
+      testCase: "len(l1) == 4",
+      solution: "l1.extend(l2)",
+      difficulty: "easy",
+      topic: "List Methods"
+    },
+    {
+      id: 79,
+      level: 8,
+      title: "Copy List",
+      description: "Create `l = [1, 2]`. Create a shallow copy named `l_copy` using copy().",
+      starterCode: "l = [1, 2]\n",
+      testCase: "l_copy == [1, 2] and l_copy is not l",
+      solution: "l_copy = l.copy()",
+      difficulty: "medium",
+      topic: "List Methods"
+    },
+    {
+      id: 80,
+      level: 8,
+      title: "Reverse Method",
+      description: "Create `l = [1, 2, 3]`. Reverse the list in-place using reverse().",
+      starterCode: "l = [1, 2, 3]\n",
+      testCase: "l[0] == 3",
+      solution: "l.reverse()",
+      difficulty: "easy",
+      topic: "List Methods"
+    }
   ]
 };
 

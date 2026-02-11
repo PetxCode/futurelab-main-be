@@ -243,7 +243,10 @@ const initSocket = (httpServer) => {
         'datatypes': 2,
         'lists': 3,
         'dictionaries': 4,
-        'advanced': 5
+        'advanced': 5,
+        'strings': 6,
+        'conversions': 7,
+        'listmethods': 8
       };
       const level = topicToLevel[room.topic] || 1;
       const levelQuestions = getQuestionsByLevel(level);
