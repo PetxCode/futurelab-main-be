@@ -32,7 +32,9 @@ const initSocket = (httpServer) => {
           totalRounds: 10, // Battle will have 10 questions
           roundScores: {}, // Track scores per round
           firstCorrectTime: null, // Track time of first correct answer
-          roundStartTime: null // Track when round started
+          roundStartTime: null, // Track when round started
+          solvedUsers: [], // Track users who already solved the current question
+          topic: roomId.split('-')[1] || 'general' // Extract topic from roomId
         };
       }
 
@@ -121,6 +123,16 @@ const initSocket = (httpServer) => {
         }
         
         if (passed) {
+            // Prevent multiple scored submissions for the same question
+            if (rooms[roomId].solvedUsers && rooms[roomId].solvedUsers.includes(socket.id)) {
+                return socket.emit("submission_result", { 
+                    userId: socket.id, 
+                    success: true, 
+                    points: 0,
+                    message: "You've already gotten a point"
+                });
+            }
+
             const points = Math.max(10, 100 - timeTaken);
             rooms[roomId].scores[socket.id] = (rooms[roomId].scores[socket.id] || 0) + points;
             
@@ -143,6 +155,10 @@ const initSocket = (httpServer) => {
                 rooms[roomId].users[userIndex].score = rooms[roomId].scores[socket.id];
                 rooms[roomId].users[userIndex].lastSolveTime = timeTaken;
                 rooms[roomId].users[userIndex].lastRoundPoints = points;
+                
+                // Track that this user has solved the question
+                if (!rooms[roomId].solvedUsers) rooms[roomId].solvedUsers = [];
+                rooms[roomId].solvedUsers.push(socket.id);
             }
             
             // Broadcast updated scores
@@ -209,8 +225,31 @@ const initSocket = (httpServer) => {
       user.lastRoundPoints = null;
     });
 
-    const levelQuestions = getQuestionsByLevel(room.currentLevel);
-    const question = levelQuestions[room.currentQuestionIndex];
+    // Reset solved users for the new round
+    room.solvedUsers = [];
+
+    let question;
+    if (room.topic === 'general') {
+      // Pick a random level for general room
+      const levels = Object.keys(require("../data/questionBank").questionLevels);
+      const randomLevel = levels[Math.floor(Math.random() * levels.length)];
+      const levelQuestions = getQuestionsByLevel(randomLevel);
+      // Pick a random question from that level that hasn't been used (simplified for now: just random)
+      question = levelQuestions[Math.floor(Math.random() * levelQuestions.length)];
+    } else {
+      // Topic specific rooms map to levels
+      const topicToLevel = {
+        'variables': 1,
+        'datatypes': 2,
+        'lists': 3,
+        'dictionaries': 4,
+        'advanced': 5
+      };
+      const level = topicToLevel[room.topic] || 1;
+      const levelQuestions = getQuestionsByLevel(level);
+      // For topic rooms, we can use the currentQuestionIndex to go through the 10 questions
+      question = levelQuestions[room.currentQuestionIndex % levelQuestions.length];
+    }
     
     if (!question) {
       // No more questions, end battle
