@@ -21,6 +21,19 @@ const initSocket = (httpServer) => {
       socket.join(roomId);
       
       if (!rooms[roomId]) {
+        const topic = roomId.split('-')[1] || 'general';
+        const topicToLevel = {
+          'variables': 1,
+          'datatypes': 2,
+          'lists': 3,
+          'dictionaries': 4,
+          'advanced': 5,
+          'strings': 6,
+          'conversions': 7,
+          'listmethods': 8,
+          'factory': 9
+        };
+
         rooms[roomId] = { 
           users: [], 
           gameState: 'waiting',
@@ -28,14 +41,15 @@ const initSocket = (httpServer) => {
           timer: null,
           currentQuestionIndex: 0,
           currentRound: 0,
-          currentLevel: 1, // Start at Level 1
-          totalRounds: 10, // Battle will have 10 questions
-          roundScores: {}, // Track scores per round
-          firstCorrectTime: null, // Track time of first correct answer
-          roundStartTime: null, // Track when round started
-          solvedUsers: [], // Track users who already solved the current question
-          topic: roomId.split('-')[1] || 'general' // Extract topic from roomId
+          currentLevel: topicToLevel[topic] || 1,
+          totalRounds: 10,
+          roundScores: {},
+          firstCorrectTime: null,
+          roundStartTime: null,
+          solvedUsers: [],
+          topic: topic
         };
+        console.log(`Initialized room ${roomId} with topic ${topic} (Level ${rooms[roomId].currentLevel})`);
       }
 
       const user = { id: socket.id, username, score: 0, lastSolveTime: null, lastRoundPoints: null };
@@ -56,6 +70,7 @@ const initSocket = (httpServer) => {
     // Start Battle
     socket.on("start_battle", (roomId) => {
         if (rooms[roomId]) {
+            console.log(`Starting battle in room ${roomId}`);
             rooms[roomId].gameState = 'battling';
             rooms[roomId].currentQuestionIndex = 0;
             rooms[roomId].currentRound = 1;
@@ -67,6 +82,8 @@ const initSocket = (httpServer) => {
             });
             
             startNewRound(roomId);
+        } else {
+            console.log(`Failed to start battle: Room ${roomId} not found`);
         }
     });
 
@@ -164,9 +181,8 @@ const initSocket = (httpServer) => {
             // Broadcast updated scores
             io.to(roomId).emit("scores_updated", rooms[roomId].users);
             
-            // Emit success result to trigger confetti and point animation
-            io.to(roomId).emit("submission_result", { 
-                userId: socket.id, 
+            // Emit success result to trigger confetti and point animation (Private to sender)
+            socket.emit("submission_result", { 
                 success: true, 
                 points 
             });
@@ -174,15 +190,16 @@ const initSocket = (httpServer) => {
             const user = rooms[roomId].users.find(u => u.id === socket.id);
             io.to(roomId).emit("receive_message", { 
                user: "System", 
-               text: `${user?.username} solved the problem in ${timeTaken}s! (+${points} pts)` 
+               text: `${user?.username} solved the shipment! (+${points} pts)` 
             });
+            console.log(`User ${user?.username} solved Q${rooms[roomId].currentQuestionIndex + 1} for ${points} points.`);
 
         } else {
-            // Emit failure result (no confetti, but shows error feedback)
-            io.to(roomId).emit("submission_result", { 
-                userId: socket.id, 
+            console.log(`User ${user?.username} failed validation. Code: "${normalizedCode}" vs Expected: "${normalizedSolution}"`);
+            socket.emit("submission_result", { 
                 success: false, 
-                points: 0 
+                points: 0,
+                message: "Quality Rejection. Code does not meet factory specs."
             });
         }
     });
@@ -246,7 +263,8 @@ const initSocket = (httpServer) => {
         'advanced': 5,
         'strings': 6,
         'conversions': 7,
-        'listmethods': 8
+        'listmethods': 8,
+        'factory': 9
       };
       const level = topicToLevel[room.topic] || 1;
       const levelQuestions = getQuestionsByLevel(level);

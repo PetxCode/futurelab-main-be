@@ -910,6 +910,129 @@ const questionLevels = {
       difficulty: "easy",
       topic: "List Methods"
     }
+  ],
+  // LEVEL 9: FACTORY TYCOON (Word Factory Challenges)
+  9: [
+    {
+      id: 81,
+      level: 9,
+      title: "The Steam Press",
+      description: "Materials are coming in small. Use the Power Press to make them BIG (UPPER CASE).",
+      input: "iron_ore",
+      expected: "IRON_ORE",
+      starterCode: "material = 'iron_ore'\n",
+      testCase: "material == 'IRON_ORE'",
+      solution: "material = material.upper()",
+      topic: "Factory"
+    },
+    {
+      id: 82,
+      level: 9,
+      title: "Rust Remover",
+      description: "The 'X' marks on these crates are rusty. Replace all 'X' with an empty space.",
+      input: "CRATEX01",
+      expected: "CRATE 01",
+      starterCode: "material = 'CRATEX01'\n",
+      testCase: "material == 'CRATE 01'",
+      solution: "material = material.replace('X', ' ')",
+      topic: "Factory"
+    },
+    {
+      id: 83,
+      level: 9,
+      title: "Conveyor Cleaning",
+      description: "Loose dust (spaces) at the ends of our gears. Trim them off!",
+      input: "   GEAR_V8   ",
+      expected: "GEAR_V8",
+      starterCode: "material = '   GEAR_V8   '\n",
+      testCase: "material == 'GEAR_V8'",
+      solution: "material = material.strip()",
+      topic: "Factory"
+    },
+    {
+      id: 84,
+      level: 9,
+      title: "Label Cutter",
+      description: "We only need the first 4 serial codes. Cut the label!",
+      input: "BZ99-XP-04",
+      expected: "BZ99",
+      starterCode: "material = 'BZ99-XP-04'\n",
+      testCase: "material == 'BZ99'",
+      solution: "material = material[0:4]",
+      topic: "Factory"
+    },
+    {
+      id: 85,
+      level: 9,
+      title: "Quality Stamp",
+      description: "Add the '_OK' stamp to the end of every part name.",
+      input: "CYLINDER",
+      expected: "CYLINDER_OK",
+      starterCode: "material = 'CYLINDER'\n",
+      testCase: "material == 'CYLINDER_OK'",
+      solution: "material = material + '_OK'",
+      topic: "Factory"
+    },
+    {
+      id: 86,
+      level: 9,
+      title: "Metal Melter",
+      description: "These parts are too harsh (UPPER). Melt them down to small parts (lower case).",
+      input: "TITANIUM",
+      expected: "titanium",
+      starterCode: "material = 'TITANIUM'\n",
+      testCase: "material == 'titanium'",
+      solution: "material = material.lower()",
+      topic: "Factory"
+    },
+    {
+      id: 87,
+      level: 9,
+      title: "Gears of Reverse",
+      description: "The conveyor is moving backwards! Flip the signal to read it correctly.",
+      input: "LANIGIS_TOL",
+      expected: "LOT_SIGNAL",
+      starterCode: "material = 'LANIGIS_TOL'\n",
+      testCase: "material == 'LOT_SIGNAL'",
+      solution: "material = material[::-1]",
+      topic: "Factory"
+    },
+    {
+      id: 88,
+      level: 9,
+      title: "Industrial Inventory",
+      description: "We need to know how many letters are in this shipment ID.",
+      input: "PRODUCTION_LINE_ALPHA",
+      expected: "21",
+      starterCode: "material = 'PRODUCTION_LINE_ALPHA'\n",
+      testCase: "material == '21'",
+      solution: "material = str(len(material))",
+      topic: "Factory"
+    },
+    {
+      id: 89,
+      level: 9,
+      title: "Serial Reformatter",
+      description: "Change all '_' underscores to '-' dashes for the new system.",
+      input: "UNIT_99_TYPE_X",
+      expected: "UNIT-99-TYPE-X",
+      starterCode: "material = 'UNIT_99_TYPE_X'\n",
+      testCase: "material == 'UNIT-99-TYPE-X'",
+      solution: "material = material.replace('_', '-')",
+      topic: "Factory"
+    },
+    {
+      id: 90,
+      level: 9,
+      title: "The Factory Master",
+      description: "Final Order: Trim spaces, Make it ALL CAPS, and Reverse it!",
+      input: "   final_assembly   ",
+      expected: "YLBMESSA_LANIF",
+      starterCode: "material = '   final_assembly   '\n",
+      testCase: "material == 'YLBMESSA_LANIF'",
+      solution: "material = material.strip().upper()[::-1]",
+      topic: "Factory"
+    }
   ]
 };
 
