@@ -17,11 +17,11 @@ const initSocket = (httpServer) => {
     console.log("User connected:", socket.id);
 
     // Join Room
-    socket.on("join_room", ({ username, roomId }) => {
+    socket.on("join_room", ({ username, roomId, topic: passedTopic }) => {
       socket.join(roomId);
       
       if (!rooms[roomId]) {
-        const topic = roomId.split('-')[1] || 'general';
+        const topic = passedTopic || roomId.split('-')[1] || 'general';
         const topicToLevel = {
           'variables': 1,
           'datatypes': 2,
@@ -31,7 +31,8 @@ const initSocket = (httpServer) => {
           'strings': 6,
           'conversions': 7,
           'listmethods': 8,
-          'factory': 9
+          'factory': 9,
+          'spydecoder': 10
         };
 
         rooms[roomId] = { 
@@ -179,7 +180,7 @@ const initSocket = (httpServer) => {
             }
             
             // Broadcast updated scores
-            io.to(roomId).emit("scores_updated", rooms[roomId].users);
+            io.to(roomId).emit("room_update", rooms[roomId].users);
             
             // Emit success result to trigger confetti and point animation (Private to sender)
             socket.emit("submission_result", { 
@@ -264,7 +265,8 @@ const initSocket = (httpServer) => {
         'strings': 6,
         'conversions': 7,
         'listmethods': 8,
-        'factory': 9
+        'factory': 9,
+        'spydecoder': 10
       };
       const level = topicToLevel[room.topic] || 1;
       const levelQuestions = getQuestionsByLevel(level);

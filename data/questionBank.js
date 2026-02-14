@@ -1030,8 +1030,120 @@ const questionLevels = {
       expected: "YLBMESSA_LANIF",
       starterCode: "material = '   final_assembly   '\n",
       testCase: "material == 'YLBMESSA_LANIF'",
-      solution: "material = material.strip().upper()[::-1]",
-      topic: "Factory"
+      solution: "material = material.strip().upper()[::-1]"
+    }
+  ],
+  // LEVEL 10: SPY DECODER (String Missions)
+  10: [
+    {
+      id: 101,
+      level: 10,
+      title: "Clear the Static",
+      description: "The signal has extra spaces at the ends. Trim them off to read the secret.",
+      starterCode: "signal = '   SECURE_BASE   '\n",
+      testCase: "signal == 'SECURE_BASE'",
+      solution: "signal = signal.strip()",
+      difficulty: "easy",
+      topic: "Spy Decoder"
+    },
+    {
+      id: 102,
+      level: 10,
+      title: "Uniform Code",
+      description: "The password must be in ALL CAPS to pass the firewall.",
+      starterCode: "signal = 'password123'\n",
+      testCase: "signal == 'PASSWORD123'",
+      solution: "signal = signal.upper()",
+      difficulty: "easy",
+      topic: "Spy Decoder"
+    },
+    {
+      id: 103,
+      level: 10,
+      title: "Hidden Symbol",
+      description: "There is an extra '#' in the coordinates. Replace it with a space.",
+      starterCode: "signal = 'Agent#Smith'\n",
+      testCase: "signal == 'Agent Smith'",
+      solution: "signal = signal.replace('#', ' ')",
+      difficulty: "easy",
+      topic: "Spy Decoder"
+    },
+    {
+      id: 104,
+      level: 10,
+      title: "Extract the Key",
+      description: "We only need the first 5 characters of this long transmission.",
+      starterCode: "signal = 'ALPHA_OMEGA_SECRET'\n",
+      testCase: "signal == 'ALPHA'",
+      solution: "signal = signal[0:5]",
+      difficulty: "medium",
+      topic: "Spy Decoder"
+    },
+    {
+      id: 105,
+      level: 10,
+      title: "Mirror Protocol",
+      description: "The intercepted signal is reversed! Flip it back.",
+      starterCode: "signal = 'ESAB_ID_MAIP'\n",
+      testCase: "signal == 'PIAM_DI_BASE'",
+      solution: "signal = signal[::-1]",
+      difficulty: "medium",
+      topic: "Spy Decoder"
+    },
+    {
+      id: 106,
+      level: 10,
+      title: "The Secure Bridge",
+      description: "Join this fragment with '_ACTIVE' to restore the signal.",
+      starterCode: "signal = 'COMMAND'\n",
+      testCase: "signal == 'COMMAND_ACTIVE'",
+      solution: "signal = signal + '_ACTIVE'",
+      difficulty: "easy",
+      topic: "Spy Decoder"
+    },
+    {
+      id: 107,
+      level: 10,
+      title: "Left-Side Leak",
+      description: "A specific encryption error added spaces only on the LEFT. Trim them off.",
+      starterCode: "signal = '     GHOST_ONE'\n",
+      testCase: "signal == 'GHOST_ONE'",
+      solution: "signal = signal.lstrip()",
+      difficulty: "easy",
+      topic: "Spy Decoder"
+    },
+    {
+      id: 108,
+      level: 10,
+      title: "Official ID",
+      description: "Spy aliases must be in 'Title Case' to match the database.",
+      starterCode: "signal = 'agent penguin'\n",
+      testCase: "signal == 'Agent Penguin'",
+      solution: "signal = signal.title()",
+      difficulty: "medium",
+      topic: "Spy Decoder"
+    },
+    {
+      id: 109,
+      level: 10,
+      title: "Signal Statistics",
+      description: "The firewall needs the length of this signal. Store it back in signal (as a string).",
+      starterCode: "signal = 'MISSION_IMPOSSIBLE'\n",
+      testCase: "signal == '18'",
+      solution: "signal = str(len(signal))",
+      difficulty: "hard",
+      topic: "Spy Decoder"
+    },
+    {
+      id: 110,
+      level: 10,
+      title: "The Omega Protocol",
+      description: "Final Boss! Lowercase it, remove '#' symbols, and trim all spaces.",
+      starterCode: "signal = '  #AGENT_#007#  '\n",
+      testCase: "signal == 'agent_007'",
+      solution: "signal = signal.lower().replace('#', '').strip()",
+      difficulty: "hard",
+      topic: "Spy Decoder"
     }
   ]
 };
