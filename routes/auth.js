@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
 
+const School = require('../models/School');
+
 // Setup Nodemailer (Placeholder settings)
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.ethereal.email',
@@ -18,12 +20,23 @@ const transporter = nodemailer.createTransport({
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { fullName, email, password, schoolName } = req.body;
+    const { fullName, email, password, schoolName, schoolCode } = req.body;
 
     // Check if user exists
     let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // School code validation
+    if (schoolName && schoolName !== 'Independent') {
+        const school = await School.findOne({ name: schoolName });
+        if (!school) {
+            return res.status(400).json({ message: 'Selected school not found' });
+        }
+        if (school.schoolCode !== schoolCode) {
+            return res.status(400).json({ message: 'Invalid school access code' });
+        }
     }
 
     // Hash password

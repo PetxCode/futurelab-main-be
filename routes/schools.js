@@ -41,6 +41,7 @@ router.get('/stats', auth, async (req, res) => {
         $project: {
           name: 1,
           address: 1,
+          schoolCode: 1,
           createdAt: 1,
           isSuspended: 1,
           studentCount: {
@@ -110,9 +111,19 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ message: 'School already exists' });
     }
 
+    // Generate unique 4-digit code
+    let schoolCode;
+    let isUnique = false;
+    while (!isUnique) {
+      schoolCode = Math.floor(1000 + Math.random() * 9000).toString();
+      const existing = await School.findOne({ schoolCode });
+      if (!existing) isUnique = true;
+    }
+
     school = new School({
       name,
-      address
+      address,
+      schoolCode
     });
 
     await school.save();

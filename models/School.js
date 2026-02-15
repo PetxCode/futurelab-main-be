@@ -18,6 +18,14 @@ const SchoolSchema = new mongoose.Schema({
   isSuspended: {
     type: Boolean,
     default: false
+  },
+  schoolCode: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    minlength: 4,
+    maxlength: 4
   }
 });
 
