@@ -30,6 +30,15 @@ const activitySchema = new mongoose.Schema({
   duration: {
     type: Number, // In minutes
     default: 0
+  },
+  gradeId: {
+    type: String
+  },
+  termId: {
+    type: String
+  },
+  lessonId: {
+    type: Number
   }
 }, { timestamps: true });
 

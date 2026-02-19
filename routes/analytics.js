@@ -211,7 +211,7 @@ router.get('/', auth, async (req, res) => {
 // @desc    Log any learning activity (lesson, quiz, game, etc.)
 router.post('/log', auth, async (req, res) => {
     try {
-        const { type, title, category, points, duration, score } = req.body;
+        const { type, title, category, points, duration, score, gradeId, termId, lessonId } = req.body;
         const activity = new Activity({
             user: req.user.id,
             type,
@@ -219,11 +219,40 @@ router.post('/log', auth, async (req, res) => {
             category,
             points: points || 10,
             duration: duration || 0,
-            score: score || 0
+            score: score || 0,
+            gradeId,
+            termId,
+            lessonId
         });
         await activity.save();
 
         res.json(activity);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   GET /api/analytics/scores/:gradeId
+// @desc    Get lesson scores for a specific grade level
+router.get('/scores/:gradeId', auth, async (req, res) => {
+    try {
+        const activities = await Activity.find({
+            user: req.user.id,
+            gradeId: req.params.gradeId,
+            type: 'quiz'
+        }).sort({ createdAt: -1 });
+
+        // Map to keep only the highest score for each lesson (unique by term+lesson)
+        const scoreMap = {};
+        activities.forEach(act => {
+            const key = `${act.termId}_${act.lessonId}`;
+            if (!scoreMap[key] || act.score > scoreMap[key]) {
+                scoreMap[key] = act.score;
+            }
+        });
+
+        res.json(scoreMap);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

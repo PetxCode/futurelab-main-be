@@ -223,4 +223,34 @@ router.put('/role/:id', [auth, admin], async (req, res) => {
   }
 });
 
+// @route   DELETE /api/user/:id
+// @desc    Delete a user (Super Admin Only)
+router.delete('/:id', [auth, admin], async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.id);
+    if (!currentUser.isAdmin) {
+      return res.status(403).json({ message: 'Only Super Admins can delete users' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Delete associated activities
+    await Activity.deleteMany({ user: req.params.id });
+    
+    // Delete associated course progress (if any)
+    await Course.deleteMany({ user: req.params.id });
+
+    // Delete the user
+    await User.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;
