@@ -14,12 +14,14 @@ const projectRoutes = require('./routes/projects');
 
 const http = require('http');
 const { initSocket } = require('./sockets/battleSocket');
+const { initTugSocket } = require('./sockets/tugOfWarSocket');
 
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket
+// Initialize Sockets
 initSocket(server);
+initTugSocket(server);
 
 // Middleware
 app.use(express.json());
