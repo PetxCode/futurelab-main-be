@@ -11,6 +11,7 @@ const analyticsRoutes = require('./routes/analytics');
 const schoolRoutes = require('./routes/schools');
 const nextTeachRoutes = require('./routes/nextTeach');
 const projectRoutes = require('./routes/projects');
+const reportRoutes = require('./routes/reports');
 
 const http = require('http');
 const { initSocket } = require('./sockets/battleSocket');
@@ -36,6 +37,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/schools', schoolRoutes);
 app.use('/api/next-teach', nextTeachRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Database Connection
 const PORT = process.env.PORT || 5000;

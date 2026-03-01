@@ -90,37 +90,41 @@ router.post('/avatar', [auth, upload.single('avatar')], async (req, res) => {
 const admin = require('../middleware/admin');
 
 // @route   GET /api/user/list
-// @desc    Get all users with filtering and progress aggregation (Admin Only)
+// @desc    Get paginated users with filtering and aggregated progress (Admin Only)
 router.get('/list', [auth, admin], async (req, res) => {
   try {
-    const { name, school, grade } = req.query;
+    const { name, school, grade, page = 1, limit = 20 } = req.query;
     const currentUser = await User.findById(req.user.id);
     let matchQuery = {};
 
     // Enforce school restriction for School Admins
     if (currentUser.isSchoolAdmin && !currentUser.isAdmin) {
-      matchQuery.schoolName = currentUser.schoolName;
+      if (currentUser.schoolName) {
+        matchQuery.schoolName = { $regex: currentUser.schoolName, $options: 'i' };
+      }
     } else if (school) {
       matchQuery.schoolName = { $regex: school, $options: 'i' };
     }
 
-    if (name) {
-      matchQuery.fullName = { $regex: name, $options: 'i' };
-    }
-    if (grade) {
-      matchQuery.grade = { $regex: grade, $options: 'i' };
-    }
+    if (name) matchQuery.fullName = { $regex: name, $options: 'i' };
+    if (grade) matchQuery.grade = { $regex: grade, $options: 'i' };
 
-    // Use aggregation to join with Activity and Course data
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const total = await User.countDocuments(matchQuery);
+
+    // Single aggregation pipeline — replaces per-user Activity/Course lookups
     const users = await User.aggregate([
       { $match: matchQuery },
       { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: parseInt(limit) },
+      { $project: { password: 0 } },
       {
         $lookup: {
           from: 'activities',
           localField: '_id',
           foreignField: 'user',
-          as: 'userActivities'
+          as: 'activities'
         }
       },
       {
@@ -128,67 +132,62 @@ router.get('/list', [auth, admin], async (req, res) => {
           from: 'courses',
           localField: '_id',
           foreignField: 'user',
-          as: 'userCourses'
+          as: 'courses'
         }
       },
       {
-        $project: {
-          password: 0,
-          userActivities: 0, // We'll process these or use inner aggregation
+        $addFields: {
+          totalXP: { $sum: '$activities.points' },
+          averageScore: {
+            $cond: [
+              { $gt: [{ $size: { $filter: { input: '$activities', as: 'a', cond: { $gt: ['$$a.score', 0] } } } }, 0] },
+              {
+                $round: [
+                  {
+                    $divide: [
+                      { $sum: { $map: { input: { $filter: { input: '$activities', as: 'a', cond: { $gt: ['$$a.score', 0] } } }, as: 'fa', in: '$$fa.score' } } },
+                      { $size: { $filter: { input: '$activities', as: 'a', cond: { $gt: ['$$a.score', 0] } } } }
+                    ]
+                  },
+                  0
+                ]
+              },
+              0
+            ]
+          },
+          missionsCompleted: {
+            $reduce: {
+              input: '$courses',
+              initialValue: 0,
+              in: { $add: ['$$value', { $size: { $filter: { input: '$$this.subCourses', as: 'm', cond: '$$m.isCompleted' } } }] }
+            }
+          },
+          totalMissions: {
+            $cond: [
+              { $gt: [{ $size: '$courses' }, 0] },
+              { $reduce: { input: '$courses', initialValue: 0, in: { $add: ['$$value', { $size: '$$this.subCourses' }] } } },
+              20
+            ]
+          },
+          lastActivityAt: { $max: '$activities.createdAt' },
+          lastPoints: {
+            $let: {
+              vars: { last: { $arrayElemAt: [{ $sortArray: { input: '$activities', sortBy: { createdAt: -1 } } }, 0] } },
+              in: { $ifNull: ['$$last.points', 0] }
+            }
+          },
+          lastActivityTitle: {
+            $let: {
+              vars: { last: { $arrayElemAt: [{ $sortArray: { input: '$activities', sortBy: { createdAt: -1 } } }, 0] } },
+              in: { $ifNull: ['$$last.title', 'No recent activity'] }
+            }
+          }
         }
       },
-      // Unfortunately project doesn't easily sum arrays from lookup without unwind/group or $addFields
+      { $project: { activities: 0, courses: 0 } }
     ]);
 
-    // Since aggregation pipelines can get complex with multiple lookups and nested arrays,
-    // let's use a simpler approach of mapping after fetching basic user info for reliability
-    // but aggregate XP and course progress in parallel.
-    
-    const userList = await User.find(matchQuery).select('-password').sort({ createdAt: -1 }).lean();
-    
-    const enrichedUsers = await Promise.all(userList.map(async (u) => {
-      // Aggregate XP and Scores
-      const activities = await Activity.find({ user: u._id });
-      const totalXP = activities.reduce((sum, act) => sum + (act.points || 0), 0);
-      
-      const scoreActivities = activities.filter(act => act.score > 0);
-      const averageScore = scoreActivities.length > 0 
-        ? Math.round(scoreActivities.reduce((sum, act) => sum + act.score, 0) / scoreActivities.length)
-        : 0;
-
-      // Aggregate Missions
-      const courses = await Course.find({ user: u._id });
-      let missionsCompleted = 0;
-      let totalMissions = courses.length > 0 ? 0 : 20; // Default to 20 for core curriculum if no courses started
-      
-      courses.forEach(c => {
-        totalMissions += c.subCourses.length;
-        missionsCompleted += c.subCourses.filter(m => m.isCompleted).length;
-      });
-
-      // Fallback: If no missions in courses but has quiz/lesson/game activities, count those
-      if (missionsCompleted === 0) {
-        missionsCompleted = activities.filter(act => act.type === 'quiz' || act.type === 'lesson' || act.type === 'game').length;
-      }
-
-      // Latest activity details
-      const lastActivity = activities.length > 0 
-        ? activities.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
-        : null;
-
-      return {
-        ...u,
-        totalXP,
-        averageScore,
-        missionsCompleted,
-        totalMissions: totalMissions || 20, // Fallback to 20 if none found to avoid div by zero
-        lastActivityAt: lastActivity ? lastActivity.createdAt : null,
-        lastPoints: lastActivity ? lastActivity.points : 0,
-        lastActivityTitle: lastActivity ? lastActivity.title : 'No recent activity'
-      };
-    }));
-
-    res.json(enrichedUsers);
+    res.json({ users, total, page: parseInt(page), totalPages: Math.ceil(total / parseInt(limit)) });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
