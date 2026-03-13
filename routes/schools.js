@@ -199,4 +199,33 @@ router.put('/:id/toggle-suspension', auth, async (req, res) => {
   }
 });
 
+// @route   PUT api/schools/:id/partners
+// @desc    Update partner schools for an institution
+// @access  Private/Admin
+router.put('/:id/partners', auth, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const adminUser = await User.findById(req.user.id);
+    
+    if (!adminUser || !adminUser.isAdmin) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const { partnerSchools } = req.body;
+    const school = await School.findById(req.params.id);
+    
+    if (!school) {
+      return res.status(404).json({ message: 'School not found' });
+    }
+
+    school.partnerSchools = partnerSchools;
+    await school.save();
+
+    res.json({ message: 'Partner schools updated successfully', partnerSchools: school.partnerSchools });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

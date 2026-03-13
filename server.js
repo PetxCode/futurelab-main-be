@@ -16,6 +16,7 @@ const reportRoutes = require('./routes/reports');
 const http = require('http');
 const { initSocket } = require('./sockets/battleSocket');
 const { initTugSocket } = require('./sockets/tugOfWarSocket');
+const { initMazeSocket } = require('./sockets/mazeSocket');
 
 const app = express();
 const server = http.createServer(app);
@@ -23,6 +24,7 @@ const server = http.createServer(app);
 // Initialize Sockets
 initSocket(server);
 initTugSocket(server);
+initMazeSocket(server);
 
 // Middleware
 app.use(express.json());

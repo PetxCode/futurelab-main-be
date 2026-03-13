@@ -45,7 +45,26 @@ router.get('/school', auth, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const query = user.isAdmin ? {} : { schoolName: { $regex: user.schoolName, $options: 'i' } };
+    let query = {};
+    
+    // Only admins WITHOUT a schoolName (Super Admins) see everything.
+    // Everyone else is filtered by their school and its partners.
+    if (user.schoolName) {
+      const School = require('../models/School');
+      const school = await School.findOne({ name: user.schoolName });
+      const partners = school?.partnerSchools || [];
+      const schoolSearchList = [user.schoolName, ...partners];
+      
+      query = { 
+        schoolName: { 
+          $in: schoolSearchList.map(name => new RegExp(name, 'i')) 
+        } 
+      };
+    } else if (!user.isAdmin) {
+      // Emergency fallback for non-global admins without a schoolName
+      return res.status(403).json({ message: 'No school assigned to your account' });
+    }
+
     const reports = await Report.find(query).sort({ date: -1 }).populate('instructor', 'fullName email');
 
     res.json(reports);

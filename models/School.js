@@ -26,6 +26,10 @@ const SchoolSchema = new mongoose.Schema({
     trim: true,
     minlength: 4,
     maxlength: 4
+  },
+  partnerSchools: {
+    type: [String],
+    default: []
   }
 });
 
