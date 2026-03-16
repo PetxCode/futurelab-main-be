@@ -6,6 +6,24 @@ const User = require('../models/User');
 const nodemailer = require('nodemailer');
 
 const School = require('../models/School');
+const https = require('https');
+
+function paystackVerify(reference) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api.paystack.co',
+      port: 443,
+      path: '/transaction/verify/' + reference,
+      method: 'GET',
+      headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` }
+    };
+    https.request(options, res => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(JSON.parse(data)));
+    }).on('error', reject).end();
+  });
+}
 
 // Setup Nodemailer (Placeholder settings)
 const transporter = nodemailer.createTransport({
@@ -28,7 +46,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // School code validation
+    // School code validation (skip for Independent/Others users)
     if (schoolName && schoolName !== 'Independent') {
         const school = await School.findOne({ name: schoolName });
         if (!school) {
@@ -63,6 +81,59 @@ router.post('/register', async (req, res) => {
       console.error('CRITICAL: JWT_SECRET is missing from environment variables.');
     }
     res.status(500).json({ message: 'Server error', detail: err.message });
+  }
+});
+
+// Register with prior Payment
+router.post('/register-with-payment', async (req, res) => {
+  try {
+    const { fullName, email, password, reference } = req.body;
+    
+    // 1. Verify Payment
+    const result = await paystackVerify(reference);
+    if (!result.status || result.data.status !== 'success') {
+      return res.status(400).json({ message: 'Payment verification failed or incomplete' });
+    }
+
+    // 2. Check User
+    let user = await User.findOne({ email: email.toLowerCase() });
+    if (user) return res.status(400).json({ message: 'User already exists' });
+
+    // 3. Subscription metadata
+    const { metadata, customer } = result.data;
+    const planKey = metadata?.planKey;
+    const nextBillingMap = { '3months': 3, '6months': 6, '1year': 12 };
+    const monthsToAdd = nextBillingMap[planKey] || 1;
+    const now = new Date();
+    const nextBillingDate = new Date(now.setMonth(now.getMonth() + monthsToAdd));
+
+    const subscription = {
+      plan: planKey,
+      status: 'active',
+      paystackCustomerCode: customer?.customer_code || null,
+      paystackSubscriptionCode: result.data.subscription_code || null,
+      nextBillingDate,
+    };
+
+    // 4. Create User
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    user = new User({ 
+      fullName, 
+      email: email.toLowerCase(), 
+      password: hashedPassword, 
+      schoolName: 'Independent', 
+      subscription 
+    });
+    await user.save();
+
+    // 5. Generate token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    res.status(201).json({ token, user: { id: user._id, fullName, email, isAdmin: user.isAdmin, subscription: user.subscription } });
+  } catch(err) {
+    console.error('Register via Payment error:', err);
+    res.status(500).json({ message: 'Server error during secure registration' });
   }
 });
 

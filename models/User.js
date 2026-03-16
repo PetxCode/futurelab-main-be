@@ -35,6 +35,13 @@ const userSchema = new mongoose.Schema({
   isBlocked: { type: Boolean, default: false },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+  subscription: {
+    plan: { type: String, enum: ['3months', '6months', '1year', null], default: null },
+    status: { type: String, enum: ['active', 'inactive', 'pending', null], default: null },
+    paystackCustomerCode: { type: String, default: null },
+    paystackSubscriptionCode: { type: String, default: null },
+    nextBillingDate: { type: Date, default: null },
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
