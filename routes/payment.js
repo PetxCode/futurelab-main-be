@@ -91,7 +91,7 @@ router.post('/initialize', auth, async (req, res) => {
 
     const planCode = await ensurePlanCode(plan);
 
-    const callback_url = `${process.env.APP_URL || 'http://localhost:5173'}/payment/verify`;
+    const callback_url = `${process.env.APP_URL || 'http://localhost:3000'}/payment/verify`;
 
     const result = await paystackRequest('POST', '/transaction/initialize', {
       email: user.email,
@@ -138,7 +138,7 @@ router.post('/initialize-new', async (req, res) => {
 
     const planCode = await ensurePlanCode(plan);
 
-    const callback_url = `${process.env.APP_URL || 'http://localhost:5173'}?payment_type=signup`;
+    const callback_url = `${process.env.APP_URL || 'http://localhost:3000'}?payment_type=signup`;
 
     const result = await paystackRequest('POST', '/transaction/initialize', {
       email,
