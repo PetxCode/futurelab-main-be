@@ -15,6 +15,7 @@ const reportRoutes = require('./routes/reports');
 const paymentRoutes = require('./routes/payment');
 
 const http = require('http');
+const { Server } = require('socket.io');
 const { initSocket } = require('./sockets/battleSocket');
 const { initTugSocket } = require('./sockets/tugOfWarSocket');
 const { initMazeSocket } = require('./sockets/mazeSocket');
@@ -23,9 +24,16 @@ const app = express();
 const server = http.createServer(app);
 
 // Initialize Sockets
-initSocket(server);
-initTugSocket(server);
-initMazeSocket(server);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+initSocket(io);
+initTugSocket(io);
+initMazeSocket(io);
 
 // Middleware
 app.use(express.json());

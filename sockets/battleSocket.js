@@ -1,18 +1,8 @@
-const { Server } = require("socket.io");
 const { getQuestionsByLevel } = require("../data/questionBank");
-
-let io;
 
 const rooms = {}; // Store room state
 
-const initSocket = (httpServer) => {
-  io = new Server(httpServer, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
-    }
-  });
-
+const initSocket = (io) => {
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 

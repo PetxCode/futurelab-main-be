@@ -8,9 +8,9 @@ const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 
 // Plan definitions — amounts in kobo (₦ × 100)
 const PLANS = {
-  '3months': { name: 'FutureLab 3-Month Plan', amount: 600000, interval: 'quarterly' },
-  '6months': { name: 'FutureLab 6-Month Plan', amount: 1000000, interval: 'biannually' },
-  '1year':   { name: 'FutureLab 1-Year Plan',  amount: 1600000, interval: 'annually' },
+  '3months': { name: 'FutureLab 3-Month Plan (20k)', amount: 2000000, interval: 'quarterly' },
+  '6months': { name: 'FutureLab 6-Month Plan (35k)', amount: 3500000, interval: 'biannually' },
+  '1year':   { name: 'FutureLab 1-Year Plan (60k)',  amount: 6000000, interval: 'annually' },
 };
 
 // Cache plan codes after first creation so we don't recreate on every request

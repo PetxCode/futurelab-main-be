@@ -1,15 +1,6 @@
-const { Server } = require("socket.io");
-
 const mazeRooms = {}; // Store maze battle room state
 
-const initMazeSocket = (httpServer) => {
-  const io = new Server(httpServer, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
-    }
-  });
-
+const initMazeSocket = (io) => {
   const mazeNamespace = io.of("/maze-battle");
 
   mazeNamespace.on("connection", (socket) => {

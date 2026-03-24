@@ -1,17 +1,8 @@
-const { Server } = require("socket.io");
 const { getQuestionsByLevel } = require("../data/questionBank");
 
-let io;
 const tugRooms = {}; // Store Tug of War room state
 
-const initTugSocket = (httpServer) => {
-  io = new Server(httpServer, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
-    }
-  });
-
+const initTugSocket = (io) => {
   io.on("connection", (socket) => {
     console.log("Tug User connected:", socket.id);
 
