@@ -8,6 +8,21 @@ const Activity = require('../models/Activity');
 const Course = require('../models/Course');
 const jwt = require('jsonwebtoken');
 const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
+
+// @route   GET /api/user/instructors
+// @desc    Get list of all instructors (Public)
+router.get('/instructors', async (req, res) => {
+  try {
+    const instructors = await User.find({ isInstructor: true, isBlocked: false })
+      .select('fullName avatarUrl instructorProfile')
+      .lean();
+    res.json(instructors);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 // Cloudinary Config
 cloudinary.config({
@@ -32,7 +47,10 @@ const upload = multer({ storage: storage });
 // @desc    Get current user profile with accumulated XP
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password').lean();
+    const user = await User.findById(req.user.id)
+      .select('-password')
+      .populate('selectedInstructor', 'fullName avatarUrl instructorProfile')
+      .lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     // Aggregate total points from activities
@@ -87,7 +105,6 @@ router.post('/avatar', [auth, upload.single('avatar')], async (req, res) => {
   }
 });
 
-const admin = require('../middleware/admin');
 
 // @route   GET /api/user/list
 // @desc    Get paginated users with filtering and aggregated progress (Admin Only)
@@ -212,7 +229,11 @@ router.put('/role/:id', [auth, admin], async (req, res) => {
 
     if (isAdmin !== undefined) user.isAdmin = isAdmin;
     if (isSchoolAdmin !== undefined) user.isSchoolAdmin = isSchoolAdmin;
-    if (isInstructor !== undefined) user.isInstructor = isInstructor;
+    if (isInstructor !== undefined) {
+      user.isInstructor = isInstructor;
+      // Clear pending status when instructor role is toggled
+      if (isInstructor) user.isInstructorPending = false;
+    }
 
     await user.save();
     res.json(user);
@@ -246,6 +267,83 @@ router.delete('/:id', [auth, admin], async (req, res) => {
     await User.findByIdAndDelete(req.params.id);
 
     res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   PUT /api/user/assign-instructor
+// @desc    Assign an instructor to the current user
+router.put('/assign-instructor', auth, async (req, res) => {
+  const { instructorId } = req.body;
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Verify if the instructor exists and is an instructor
+    const instructor = await User.findById(instructorId);
+    if (!instructor || !instructor.isInstructor) {
+      return res.status(400).json({ message: 'Invalid instructor ID' });
+    }
+
+    user.selectedInstructor = instructorId;
+    await user.save();
+
+    // Populate and return the user
+    const updatedUser = await User.findById(req.user.id)
+      .select('-password')
+      .populate('selectedInstructor', 'fullName avatarUrl instructorProfile');
+    
+    res.json(updatedUser);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   PUT /api/user/request-instructor
+// @desc    Request to become an instructor
+// @access  Private
+router.put('/request-instructor', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.isInstructorPending = true;
+    await user.save();
+
+    res.json({ message: 'Instructor request submitted successfully', user });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   PUT /api/user/instructor-profile
+// @desc    Update instructor professional profile
+// @access  Private (Instructor only)
+router.put('/instructor-profile', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user.isInstructor) return res.status(403).json({ message: 'Not authorized' });
+
+    const { bio, detailedBio, yearsExperience, monthlyRate, specialties, skillset, availability } = req.body;
+
+    user.instructorProfile = {
+      ...user.instructorProfile,
+      bio: bio || user.instructorProfile.bio,
+      detailedBio: detailedBio || user.instructorProfile.detailedBio,
+      yearsExperience: yearsExperience || user.instructorProfile.yearsExperience,
+      monthlyRate: monthlyRate || user.instructorProfile.monthlyRate,
+      specialties: specialties || user.instructorProfile.specialties,
+      skillset: skillset || user.instructorProfile.skillset,
+      availability: availability || user.instructorProfile.availability
+    };
+
+    await user.save();
+    res.json(user.instructorProfile);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');

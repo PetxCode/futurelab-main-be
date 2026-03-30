@@ -124,7 +124,8 @@ router.post('/register-with-payment', async (req, res) => {
       email: email.toLowerCase(), 
       password: hashedPassword, 
       schoolName: 'Independent', 
-      subscription 
+      subscription,
+      selectedInstructor: metadata?.instructorId || null
     });
     await user.save();
 

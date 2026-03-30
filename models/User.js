@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema({
   },
   isSchoolAdmin: { type: Boolean, default: false },
   isInstructor: { type: Boolean, default: false },
+  isInstructorPending: { type: Boolean, default: false },
   isBlocked: { type: Boolean, default: false },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
@@ -41,6 +42,39 @@ const userSchema = new mongoose.Schema({
     paystackCustomerCode: { type: String, default: null },
     paystackSubscriptionCode: { type: String, default: null },
     nextBillingDate: { type: Date, default: null },
+  },
+  instructorProfile: {
+    bio: { 
+      type: String, 
+      default: "Full-stack engineer and educator. Focused on empowering students to build real-world web applications and mobile apps." 
+    },
+    specialties: { 
+      type: [String], 
+      default: ["Python", "Game", "Robotic"] 
+    },
+    monthlyRate: { 
+      type: Number, 
+      default: 20000 
+    },
+    rating: { 
+      type: Number, 
+      default: 2.0 
+    },
+    yearsExperience: { 
+      type: Number, 
+      default: 1 
+    },
+    availability: { type: String, default: 'Flexible' },
+    detailedBio: { type: String, default: '' },
+    skillset: { type: [String], default: [] },
+    studentsTrainedCount: { type: Number, default: 0 },
+    trainingHighlights: { type: [String], default: [] },
+    otherCriticalInfo: { type: [String], default: [] },
+  },
+  selectedInstructor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   },
 }, { timestamps: true });
 

@@ -6,11 +6,18 @@ const User = require('../models/User');
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 
-// Plan definitions — amounts in kobo (₦ × 100)
-const PLANS = {
-  '3months': { name: 'FutureLab 3-Month Plan (20k)', amount: 2000000, interval: 'quarterly' },
-  '6months': { name: 'FutureLab 6-Month Plan (35k)', amount: 3500000, interval: 'biannually' },
-  '1year':   { name: 'FutureLab 1-Year Plan (60k)',  amount: 6000000, interval: 'annually' },
+// Plan intervals
+const PLAN_INTERVALS = {
+  '3months': 'quarterly',
+  '6months': 'biannually',
+  '1year':   'annually',
+};
+
+// Base prices in kobo
+const BASE_PLANS = {
+  '3months': 2000000,
+  '6months': 3500000,
+  '1year':   6000000,
 };
 
 // Cache plan codes after first creation so we don't recreate on every request
@@ -45,35 +52,34 @@ function paystackRequest(method, path, body = null) {
   });
 }
 
-// ── Ensure a Paystack plan exists for the given plan key ───────────────────
-async function ensurePlanCode(planKey) {
-  if (planCodeCache[planKey]) return planCodeCache[planKey];
-
-  const def = PLANS[planKey];
+// ── Ensure a Paystack plan exists for the given name and amount ───────────
+async function ensurePlanCode(name, amount, interval) {
+  const cacheKey = `${name}_${amount}`;
+  if (planCodeCache[cacheKey]) return planCodeCache[cacheKey];
 
   // List existing plans and look for a matching one
   const list = await paystackRequest('GET', '/plan');
   if (list.status && list.data) {
-    const existing = list.data.find((p) => p.name === def.name);
+    const existing = list.data.find((p) => p.name === name && p.amount === amount);
     if (existing) {
-      planCodeCache[planKey] = existing.plan_code;
+      planCodeCache[cacheKey] = existing.plan_code;
       return existing.plan_code;
     }
   }
 
   // Create the plan
   const created = await paystackRequest('POST', '/plan', {
-    name: def.name,
-    amount: def.amount,
-    interval: def.interval,
+    name,
+    amount,
+    interval,
   });
 
   if (!created.status) {
     throw new Error(`Paystack plan creation failed: ${created.message}`);
   }
 
-  planCodeCache[planKey] = created.data.plan_code;
-  return planCodeCache[planKey];
+  planCodeCache[cacheKey] = created.data.plan_code;
+  return planCodeCache[cacheKey];
 }
 
 // ── POST /api/payment/initialize ───────────────────────────────────────────
@@ -81,29 +87,35 @@ async function ensurePlanCode(planKey) {
 // Returns authorization_url for redirect.
 router.post('/initialize', auth, async (req, res) => {
   try {
-    const { plan } = req.body;
-    if (!PLANS[plan]) {
+    const { plan, instructorId, amount } = req.body;
+    if (!BASE_PLANS[plan]) {
       return res.status(400).json({ message: 'Invalid plan selected' });
     }
 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const planCode = await ensurePlanCode(plan);
+    // Calculate or verify amount
+    let finalAmount = amount ? amount * 100 : BASE_PLANS[plan];
+    let planName = `FutureLab ${plan} Plan (₦${(finalAmount/100).toLocaleString()})`;
+    
+    const planCode = await ensurePlanCode(planName, finalAmount, PLAN_INTERVALS[plan]);
 
     const callback_url = `${process.env.APP_URL || 'http://localhost:3000'}/payment/verify`;
 
     const result = await paystackRequest('POST', '/transaction/initialize', {
       email: user.email,
-      amount: PLANS[plan].amount,
+      amount: finalAmount,
       plan: planCode,
       callback_url,
       metadata: {
         userId: user._id.toString(),
         planKey: plan,
+        instructorId: instructorId,
         custom_fields: [
           { display_name: 'Full Name', variable_name: 'fullName', value: user.fullName },
           { display_name: 'Plan', variable_name: 'plan', value: plan },
+          { display_name: 'Instructor ID', variable_name: 'instructorId', value: instructorId || 'none' },
         ],
       },
     });
@@ -131,21 +143,28 @@ router.post('/initialize', auth, async (req, res) => {
 // Initializes transaction before user is created in the DB.
 router.post('/initialize-new', async (req, res) => {
   try {
-    const { email, plan } = req.body;
-    if (!PLANS[plan]) {
+    const { email, plan, instructorId, amount } = req.body;
+    if (!BASE_PLANS[plan]) {
       return res.status(400).json({ message: 'Invalid plan selected' });
     }
 
-    const planCode = await ensurePlanCode(plan);
+    let finalAmount = amount ? amount * 100 : BASE_PLANS[plan];
+    let planName = `FutureLab ${plan} Signup (₦${(finalAmount/100).toLocaleString()})`;
+    
+    const planCode = await ensurePlanCode(planName, finalAmount, PLAN_INTERVALS[plan]);
 
     const callback_url = `${process.env.APP_URL || 'http://localhost:3000'}?payment_type=signup`;
 
     const result = await paystackRequest('POST', '/transaction/initialize', {
       email,
-      amount: PLANS[plan].amount,
+      amount: finalAmount,
       plan: planCode,
       callback_url,
-      metadata: { planKey: plan, isSignup: true },
+      metadata: { 
+        planKey: plan, 
+        isSignup: true,
+        instructorId: instructorId 
+      },
     });
 
     if (!result.status) {
@@ -192,6 +211,9 @@ router.get('/verify/:reference', auth, async (req, res) => {
       paystackSubscriptionCode: result.data.subscription_code || null,
       nextBillingDate,
     };
+    if (metadata?.instructorId) {
+      user.selectedInstructor = metadata.instructorId;
+    }
     await user.save();
 
     res.json({ message: 'Subscription activated', subscription: user.subscription });

@@ -13,6 +13,7 @@ const nextTeachRoutes = require('./routes/nextTeach');
 const projectRoutes = require('./routes/projects');
 const reportRoutes = require('./routes/reports');
 const paymentRoutes = require('./routes/payment');
+const blogRoutes = require('./routes/blog');
 
 const http = require('http');
 const { Server } = require('socket.io');
@@ -50,6 +51,7 @@ app.use('/api/next-teach', nextTeachRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/blog', blogRoutes);
 
 // Database Connection
 const PORT = process.env.PORT || 5000;
