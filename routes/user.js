@@ -331,22 +331,38 @@ router.put('/instructor-profile', auth, async (req, res) => {
 
     const { bio, detailedBio, yearsExperience, monthlyRate, specialties, skillset, availability } = req.body;
 
-    user.instructorProfile = {
-      ...user.instructorProfile,
-      bio: bio || user.instructorProfile.bio,
-      detailedBio: detailedBio || user.instructorProfile.detailedBio,
-      yearsExperience: yearsExperience || user.instructorProfile.yearsExperience,
-      monthlyRate: monthlyRate || user.instructorProfile.monthlyRate,
-      specialties: specialties || user.instructorProfile.specialties,
-      skillset: skillset || user.instructorProfile.skillset,
-      availability: availability || user.instructorProfile.availability
-    };
+    // Ensure instructorProfile object exists
+    if (!user.instructorProfile) {
+      user.instructorProfile = {};
+    }
+
+    // Update fields individually to avoid Mongoose spread issues and handle types
+    if (bio !== undefined) user.instructorProfile.bio = bio;
+    if (detailedBio !== undefined) user.instructorProfile.detailedBio = detailedBio;
+    
+    if (yearsExperience !== undefined) {
+      const exp = parseInt(yearsExperience);
+      if (!isNaN(exp)) user.instructorProfile.yearsExperience = exp;
+    }
+    
+    if (monthlyRate !== undefined) {
+      const rate = parseInt(monthlyRate);
+      if (!isNaN(rate)) user.instructorProfile.monthlyRate = rate;
+    }
+    
+    if (specialties !== undefined) user.instructorProfile.specialties = specialties;
+    if (skillset !== undefined) user.instructorProfile.skillset = skillset;
+    if (availability !== undefined) user.instructorProfile.availability = availability;
 
     await user.save();
     res.json(user.instructorProfile);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
+    console.error('Instructor Profile Update Error:', err.message);
+    // Explicitly return validation error if it's a Mongoose ValidationError
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: err.message, errors: err.errors });
+    }
+    res.status(500).json({ message: 'Server Error', error: err.message });
   }
 });
 
