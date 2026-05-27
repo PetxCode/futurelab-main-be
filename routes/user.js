@@ -329,7 +329,18 @@ router.put('/instructor-profile', auth, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     if (!user.isInstructor) return res.status(403).json({ message: 'Not authorized' });
 
-    const { bio, detailedBio, yearsExperience, monthlyRate, specialties, skillset, availability } = req.body;
+    const { 
+      bio, 
+      detailedBio, 
+      yearsExperience, 
+      monthlyRate, 
+      specialties, 
+      skillset, 
+      availability,
+      trainingHighlights,
+      studentsTrainedCount,
+      otherCriticalInfo
+    } = req.body;
 
     // Ensure instructorProfile object exists
     if (!user.instructorProfile) {
@@ -349,10 +360,17 @@ router.put('/instructor-profile', auth, async (req, res) => {
       const rate = parseInt(monthlyRate);
       if (!isNaN(rate)) user.instructorProfile.monthlyRate = rate;
     }
+
+    if (studentsTrainedCount !== undefined) {
+      const count = parseInt(studentsTrainedCount);
+      if (!isNaN(count)) user.instructorProfile.studentsTrainedCount = count;
+    }
     
     if (specialties !== undefined) user.instructorProfile.specialties = specialties;
     if (skillset !== undefined) user.instructorProfile.skillset = skillset;
     if (availability !== undefined) user.instructorProfile.availability = availability;
+    if (trainingHighlights !== undefined) user.instructorProfile.trainingHighlights = trainingHighlights;
+    if (otherCriticalInfo !== undefined) user.instructorProfile.otherCriticalInfo = otherCriticalInfo;
 
     await user.save();
     res.json(user.instructorProfile);
