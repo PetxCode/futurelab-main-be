@@ -14,6 +14,7 @@ const projectRoutes = require("./routes/projects");
 const reportRoutes = require("./routes/reports");
 const paymentRoutes = require("./routes/payment");
 const blogRoutes = require("./routes/blog");
+const calendarRoutes = require("./routes/calendar");
 
 const http = require("http");
 const { Server } = require("socket.io");
@@ -54,6 +55,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/blog", blogRoutes);
+app.use("/api/calendar", calendarRoutes);
 
 // Database Connection
 const PORT = process.env.PORT || 5000;

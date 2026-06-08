@@ -15,6 +15,12 @@ module.exports = async function(req, res, next) {
       return res.status(401).json({ message: 'Access denied. Account is inactive or blocked.' });
     }
 
+    // Attach fresh roles and schoolName to req.user so routes can authorize properly
+    req.user.isAdmin = user.isAdmin;
+    req.user.isInstructor = user.isInstructor;
+    req.user.isSchoolAdmin = user.isSchoolAdmin;
+    req.user.schoolName = user.schoolName;
+
     // Check if school is suspended
     if (user.schoolName) {
       const School = require('../models/School');
