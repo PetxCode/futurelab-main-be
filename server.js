@@ -22,6 +22,8 @@ const { initSocket } = require("./sockets/battleSocket");
 const { initTugSocket } = require("./sockets/tugOfWarSocket");
 const { initMazeSocket } = require("./sockets/mazeSocket");
 const { initChallengeSocket } = require("./sockets/challengeSocket");
+const { initDinoSocket } = require("./sockets/dinoSocket");
+const { initInvaderSocket } = require("./sockets/invaderSocket");
 
 const app = express();
 const server = http.createServer(app);
@@ -38,6 +40,8 @@ initSocket(io);
 initTugSocket(io);
 initMazeSocket(io);
 initChallengeSocket(io);
+initDinoSocket(io);
+initInvaderSocket(io);
 
 // Middleware
 app.use(express.json());
