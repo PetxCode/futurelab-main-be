@@ -15,6 +15,7 @@ const reportRoutes = require("./routes/reports");
 const paymentRoutes = require("./routes/payment");
 const blogRoutes = require("./routes/blog");
 const calendarRoutes = require("./routes/calendar");
+const superTestRoutes = require("./routes/superTest");
 
 const http = require("http");
 const { Server } = require("socket.io");
@@ -60,6 +61,7 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/super-test", superTestRoutes);
 
 // Database Connection
 const PORT = process.env.PORT || 5000;
