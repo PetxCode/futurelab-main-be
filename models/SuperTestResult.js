@@ -10,18 +10,34 @@ const superTestResultSchema = new mongoose.Schema(
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
     },
     schoolId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "School",
-      required: true,
+      required: false,
+    },
+    fullName: {
+      type: String,
+      default: "",
+    },
+    className: {
+      type: String,
+      default: "",
+    },
+    schoolName: {
+      type: String,
+      default: "",
     },
     responses: [
       {
         questionIndex: Number,
+        questionType: { type: String, enum: ["ui", "cbt"], default: "ui" },
+        // UI fields
         submittedHtml: { type: String, default: "" },
         submittedCss: { type: String, default: "" },
+        // CBT fields
+        selectedOption: { type: String, default: "" }, // "A", "B", "C", "D"
         score: { type: Number, default: 0 }
       }
     ],

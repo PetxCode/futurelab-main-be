@@ -45,15 +45,51 @@ router.get("/check/:testId/:studentId", async (req, res) => {
   }
 });
 
+// Check if student details already exists for a test
+router.post("/check-details", async (req, res) => {
+  try {
+    const { testId, fullName, className, schoolName } = req.body;
+
+    if (!fullName || !className || !schoolName) {
+      return res.status(400).json({ success: false, message: "All student details (Full Name, Class, School Name) are required." });
+    }
+
+    const existingResult = await SuperTestResult.findOne({
+      testId,
+      fullName: { $regex: new RegExp("^" + fullName.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") },
+      className: { $regex: new RegExp("^" + className.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") },
+      schoolName: { $regex: new RegExp("^" + schoolName.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") }
+    });
+
+    if (existingResult) {
+      return res.status(200).json({ success: true, exists: true });
+    }
+
+    res.status(200).json({ success: true, exists: false });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // Submit a test result (Student)
 router.post("/submit", async (req, res) => {
   try {
-    const { testId, studentId, schoolId, responses } = req.body;
+    const { testId, studentId, schoolId, responses, fullName, className, schoolName } = req.body;
 
-    // Verify test isn't already taken
-    const existingResult = await SuperTestResult.findOne({ testId, studentId });
+    if (!fullName || !className || !schoolName) {
+      return res.status(400).json({ success: false, message: "All student details (Full Name, Class, School Name) are required." });
+    }
+
+    // Verify test isn't already taken with these details (case-insensitive)
+    const existingResult = await SuperTestResult.findOne({
+      testId,
+      fullName: { $regex: new RegExp("^" + fullName.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") },
+      className: { $regex: new RegExp("^" + className.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") },
+      schoolName: { $regex: new RegExp("^" + schoolName.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") }
+    });
+
     if (existingResult) {
-      return res.status(400).json({ success: false, message: "You have already completed this test." });
+      return res.status(400).json({ success: false, message: "A student with these details has already completed this test." });
     }
 
     // Calculate total score
@@ -65,8 +101,11 @@ router.post("/submit", async (req, res) => {
 
     const result = new SuperTestResult({
       testId,
-      studentId,
-      schoolId,
+      studentId: studentId || undefined,
+      schoolId: schoolId || undefined,
+      fullName: fullName.trim(),
+      className: className.trim(),
+      schoolName: schoolName.trim(),
       responses,
       totalScore,
     });
