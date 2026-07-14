@@ -150,4 +150,27 @@ router.delete("/:testId", async (req, res) => {
   }
 });
 
+// Update an existing Super Test (Admin)
+router.put("/:testId", async (req, res) => {
+  try {
+    const { title, description, questions, durationMinutes } = req.body;
+    const test = await SuperTest.findByIdAndUpdate(
+      req.params.testId,
+      {
+        title,
+        description,
+        questions,
+        durationMinutes,
+      },
+      { new: true }
+    );
+    if (!test) {
+      return res.status(404).json({ success: false, message: "Test not found" });
+    }
+    res.status(200).json({ success: true, data: test });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;

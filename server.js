@@ -64,10 +64,15 @@ app.use("/api/calendar", calendarRoutes);
 app.use("/api/super-test", superTestRoutes);
 
 // Database Connection
+
+const uri = "mongodb+srv://nextteachnow:nextteachnow@cluster0.9fh0y26.mongodb.net/FutureLabDB?retryWrites=true&w=majority&appName=Cluster0"
+
 const PORT = process.env.PORT || 5000;
 const MONGO_URI =
-  process.env.MONGO_URI ||
-  "mongodb+srv://nextteachnow:nextteachnow@cluster0.ozfyjn7.mongodb.net/FutureLabDB?appName=Cluster0";
+  process.env.MONGO_URI || uri
+
+
+
 
 // MongoDB connection with retry logic
 const connectDB = async () => {

@@ -21,6 +21,7 @@ const superTestSchema = new mongoose.Schema(
         targetHtml: { type: String, default: "" },
         targetCss: { type: String, default: "" },
         targetImageUrl: { type: String },
+        tailwindClue: { type: String },
         // CBT (Multiple Choice) fields
         questionText: { type: String, default: "" },
         options: [
