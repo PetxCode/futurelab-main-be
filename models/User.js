@@ -76,6 +76,10 @@ const userSchema = new mongoose.Schema({
     ref: 'User',
     default: null
   },
+  lastSeen: {
+    type: Date,
+    default: Date.now,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

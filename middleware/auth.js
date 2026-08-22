@@ -9,10 +9,17 @@ module.exports = async function(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
 
-    // Check if user is blocked
-    const user = await User.findById(req.user.id);
+    // Extract user ID safely across various JWT payload formats
+    const userId = req.user.id || req.user._id || (req.user.user && (req.user.user.id || req.user.user._id));
+    const user = await User.findById(userId);
     if (!user || user.isBlocked) {
       return res.status(401).json({ message: 'Access denied. Account is inactive or blocked.' });
+    }
+
+    // Update lastSeen timestamp if updated > 60s ago
+    const now = new Date();
+    if (!user.lastSeen || (now.getTime() - new Date(user.lastSeen).getTime() > 60000)) {
+      User.findByIdAndUpdate(user._id, { lastSeen: now }).exec().catch(err => console.error('Error updating lastSeen:', err));
     }
 
     // Attach fresh roles and schoolName to req.user so routes can authorize properly

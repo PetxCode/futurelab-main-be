@@ -384,4 +384,18 @@ router.put('/instructor-profile', auth, async (req, res) => {
   }
 });
 
+// @route   POST /api/user/heartbeat
+// @desc    Update current logged in user's lastSeen timestamp
+router.post('/heartbeat', auth, async (req, res) => {
+  try {
+    const now = new Date();
+    const userId = req.user.id || req.user._id || (req.user.user && (req.user.user.id || req.user.user._id));
+    await User.findByIdAndUpdate(userId, { lastSeen: now });
+    res.json({ success: true, lastSeen: now });
+  } catch (err) {
+    console.error('Heartbeat Error:', err.message);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
 module.exports = router;
